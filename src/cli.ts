@@ -5,8 +5,12 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { program } from "commander";
 import { SQLiteBridge } from "./bridge/sqlite-bridge.js";
+
 import { getConfig, getPersonasDir, resolvePath } from "./config.js";
 import { ContextBuilder } from "./context/builder.js";
+import { SessionDistiller } from "./context/distiller.js";
+import { StateUpdater } from "./context/state-updater.js";
+import { PersonaSync } from "./context/sync.js";
 import { PersonaLoader } from "./persona/loader.js";
 import { PersonaSaver } from "./persona/saver.js";
 import { ensureDir } from "./utils/file.js";
@@ -20,7 +24,7 @@ program
   .version(pkg.version);
 
 // ============================================================================
-// init — 初始化位格
+// init
 // ============================================================================
 
 program
@@ -38,15 +42,15 @@ program
         process.exit(1);
       }
 
-      // 从模板复制（编译后 dist/cli.js 的上级目录包含 templates/）
       const templateDir = join(__dirname, "..", "templates", "default");
       copyDir(templateDir, personaDir);
 
-      // 更新 state.json 中的 personaId
       const statePath = join(personaDir, "state.json");
       const state = JSON.parse(readFileSync(statePath, "utf-8"));
       state.personaId = options.persona;
       writeFileSync(statePath, JSON.stringify(state, null, 2));
+
+      console.log(`Created persona "${options.persona}" at ${personaDir}`);
     } catch (err) {
       console.error("Error:", err instanceof Error ? err.message : String(err));
       process.exit(1);
@@ -54,7 +58,7 @@ program
   });
 
 // ============================================================================
-// status — 查看位格状态
+// status
 // ============================================================================
 
 program
@@ -64,18 +68,33 @@ program
   .option("-d, --dir <path>", "Custom personas directory")
   .action((options) => {
     try {
-      const config = getConfig();
       const personasDir = options.dir ? resolvePath(options.dir) : getPersonasDir();
-      const personaId = options.persona ?? config.defaultPersona;
+      const personaId = options.persona ?? getConfig().defaultPersona;
 
       const loader = new PersonaLoader(personasDir);
       const persona = loader.load(personaId);
       const s = persona.state;
-      console.log(`State for "${personaId}":`);
+
+      console.log(`Persona: ${persona.core.frontmatter.name} (${persona.id})`);
       console.log(
-        `  Round: ${s.round} | SpeedWheel: ${s.speedWheel} | Workhood: ${s.workhoodIndex.toFixed(2)}`,
+        `Round: ${s.round} | SpeedWheel: ${s.speedWheel} | Workhood: ${s.workhoodIndex.toFixed(2)}`,
       );
-      console.log(`  Last updated: ${s.lastUpdated}`);
+      console.log(`Sessions: ${s.sessionCount} | Updated: ${s.lastUpdated}`);
+      console.log(``);
+      console.log("Dynamic Axes:");
+      console.log(`  valence:  ${s.dynamicAxes.valence.toString().padStart(3)} (calm←→warm)`);
+      console.log(`  arousal:  ${s.dynamicAxes.arousal.toString().padStart(3)} (low←→high)`);
+      console.log(
+        `  focus:    ${s.dynamicAxes.focus.toString().padStart(3)} (distracted←→focused)`,
+      );
+      console.log(`  mood:     ${s.dynamicAxes.mood.toString().padStart(3)} (sad←→excited)`);
+      console.log(`  humor:    ${s.dynamicAxes.humor.toString().padStart(3)} (boring←→funny)`);
+      console.log(`  safety:   ${s.dynamicAxes.safety.toString().padStart(3)} (alert←→relaxed)`);
+      console.log(``);
+      console.log(`STM entries: ${persona.stm.entries.length}`);
+      console.log(`LTM entries: ${persona.ltm.entries.length}`);
+      console.log(`Relations: ${persona.relation.entries.length}`);
+      console.log(`Terms: ${persona.docs.terms.length}`);
     } catch (err) {
       if (err instanceof Error && err.message.includes("not found")) {
         console.error(`Error: Persona not found. Run "open-upsp init" first.`);
@@ -87,14 +106,13 @@ program
   });
 
 // ============================================================================
-// search — 搜索 ZK 知识库
+// search
 // ============================================================================
 
 program
   .command("search <query>")
   .description("Search Zettelkasten knowledge base")
   .option("-l, --limit <n>", "Max results", "10")
-  .option("-p, --persona <id>", "Persona ID (for config)")
   .action((query, options) => {
     try {
       const config = getConfig();
@@ -108,28 +126,37 @@ program
       const results = bridge.searchNotes(query, Number.parseInt(options.limit, 10));
 
       if (results.length === 0) {
+        console.log(`No results for: "${query}"`);
         return;
       }
 
+      console.log(`Found ${results.length} result(s) for: "${query}"\n`);
+
       for (const result of results) {
         const note = result.note;
+        console.log(`[${note.id}] ${note.title} | ${note.folder} | ${note.status}`);
         if (note.tags.length > 0) {
+          console.log(`  Tags: ${note.tags.join(", ")}`);
         }
         if (result.snippet) {
+          console.log(`  ${result.snippet}`);
         }
+        console.log("");
       }
 
       bridge.close();
     } catch (err) {
       if (err instanceof Error && err.message.includes("not found")) {
+        console.error(`Error: Zettelkasten database not found. Run "zk init" first.`);
       } else {
+        console.error("Error:", err instanceof Error ? err.message : String(err));
       }
       process.exit(1);
     }
   });
 
 // ============================================================================
-// context — 构建完整上下文
+// context
 // ============================================================================
 
 program
@@ -160,7 +187,6 @@ program
         });
         builder = new ContextBuilder(bridge);
       } else {
-        // ZK 禁用时使用空桥接
         builder = new ContextBuilder({
           searchNotes: () => [],
           getNote: () => null,
@@ -175,16 +201,18 @@ program
         includeMemory: options.memory,
         includeLinks: options.links,
       });
+
       console.log(context);
 
       bridge?.close();
-    } catch (_err) {
+    } catch (err) {
+      console.error("Error:", err instanceof Error ? err.message : String(err));
       process.exit(1);
     }
   });
 
 // ============================================================================
-// state — 查看/更新状态
+// state
 // ============================================================================
 
 program
@@ -218,7 +246,6 @@ program
         options.safety !== undefined;
 
       if (hasUpdate) {
-        // 更新状态
         if (options.round !== undefined) {
           const roundStr = String(options.round);
           if (roundStr.startsWith("+") || roundStr.startsWith("-")) {
@@ -233,6 +260,7 @@ program
           if (options[axis] !== undefined) {
             const value = Number.parseInt(options[axis], 10);
             if (value < 0 || value > 100) {
+              console.error(`Error: ${axis} must be between 0 and 100`);
               process.exit(1);
             }
             persona.state.dynamicAxes[axis] = value;
@@ -241,8 +269,11 @@ program
 
         persona.state.lastUpdated = new Date().toISOString();
         saver.save(persona);
+
+        console.log("State updated");
+        console.log(`  Round: ${persona.state.round}`);
+        console.log(`  Updated at: ${persona.state.lastUpdated}`);
       } else {
-        // 显示状态
         const s = persona.state;
         const da = s.dynamicAxes;
         console.log(`State for "${personaId}":`);
@@ -253,7 +284,180 @@ program
         console.log(`  mood: ${da.mood} | humor: ${da.humor} | safety: ${da.safety}`);
         console.log(`  Last updated: ${s.lastUpdated}`);
       }
-    } catch (_err) {
+    } catch (err) {
+      console.error("Error:", err instanceof Error ? err.message : String(err));
+      process.exit(1);
+    }
+  });
+
+// ============================================================================
+// distill — 会话蒸馏
+// ============================================================================
+
+program
+  .command("distill")
+  .description("Distill session text into memory entries and state changes")
+  .option("-p, --persona <id>", "Persona ID")
+  .option("-d, --dir <path>", "Custom personas directory")
+  .option("-f, --file <path>", "Session log file path")
+  .option("-t, --text <text>", "Session text directly")
+  .action((options) => {
+    try {
+      let sessionText = "";
+      if (options.file) {
+        sessionText = readFileSync(resolvePath(options.file), "utf-8");
+      } else if (options.text) {
+        sessionText = options.text;
+      } else {
+        console.error("Error: Provide --file or --text");
+        process.exit(1);
+      }
+
+      const distiller = new SessionDistiller();
+      const result = distiller.distill(sessionText);
+
+      console.log("Distilled Entries:");
+      for (const entry of result.entries) {
+        console.log(
+          `  [w:${entry.weight}] ${entry.content.slice(0, 60)}${entry.content.length > 60 ? "..." : ""}`,
+        );
+      }
+
+      if (Object.keys(result.stateDelta).length > 0) {
+        console.log("\nState Changes:");
+        for (const [axis, delta] of Object.entries(result.stateDelta)) {
+          console.log(`  ${axis}: ${delta > 0 ? "+" : ""}${delta}`);
+        }
+      }
+    } catch (err) {
+      console.error("Error:", err instanceof Error ? err.message : String(err));
+      process.exit(1);
+    }
+  });
+
+// ============================================================================
+// sync — 同步到 ZK
+// ============================================================================
+
+program
+  .command("sync")
+  .description("Sync persona STM entries to Zettelkasten")
+  .option("-p, --persona <id>", "Persona ID")
+  .option("-d, --dir <path>", "Custom personas directory")
+  .option("--threshold <n>", "Weight threshold", "3")
+  .option("--dry-run", "Show what would be synced without writing")
+  .action(async (options) => {
+    try {
+      const personasDir = options.dir ? resolvePath(options.dir) : getPersonasDir();
+      const personaId = options.persona ?? getConfig().defaultPersona;
+      const threshold = Number.parseInt(options.threshold, 10);
+
+      const loader = new PersonaLoader(personasDir);
+      const persona = loader.load(personaId);
+
+      const candidates = persona.stm.entries.filter((e) => e.weight >= threshold);
+
+      if (candidates.length === 0) {
+        console.log("No entries to sync (threshold not met)");
+        return;
+      }
+
+      console.log(`Found ${candidates.length} entries to sync (weight >= ${threshold})\n`);
+
+      if (options.dryRun) {
+        for (const entry of candidates) {
+          console.log(
+            `  [w:${entry.weight}] ${entry.content.slice(0, 60)}${entry.content.length > 60 ? "..." : ""}`,
+          );
+        }
+        console.log("\nDry run — no changes made");
+        return;
+      }
+
+      const sync = new PersonaSync({ weightThreshold: threshold });
+      const result = await sync.syncStm(persona);
+
+      console.log(`Synced: ${result.synced} | Failed: ${result.failed}`);
+      if (result.noteIds.length > 0) {
+        console.log(`Note IDs: ${result.noteIds.join(", ")}`);
+      }
+    } catch (err) {
+      console.error("Error:", err instanceof Error ? err.message : String(err));
+      process.exit(1);
+    }
+  });
+
+// ============================================================================
+// session-end — 会话结束流程
+// ============================================================================
+
+program
+  .command("session-end")
+  .description("End-of-session workflow: distill + update state + sync")
+  .option("-p, --persona <id>", "Persona ID")
+  .option("-d, --dir <path>", "Custom personas directory")
+  .option("-f, --file <path>", "Session log file path")
+  .option("-t, --text <text>", "Session text directly")
+  .option("--no-sync", "Skip ZK sync")
+  .action(async (options) => {
+    try {
+      const personasDir = options.dir ? resolvePath(options.dir) : getPersonasDir();
+      const personaId = options.persona ?? getConfig().defaultPersona;
+
+      let sessionText = "";
+      if (options.file) {
+        sessionText = readFileSync(resolvePath(options.file), "utf-8");
+      } else if (options.text) {
+        sessionText = options.text;
+      } else {
+        console.error("Error: Provide --file or --text");
+        process.exit(1);
+      }
+
+      const loader = new PersonaLoader(personasDir);
+      const saver = new PersonaSaver(personasDir);
+      const persona = loader.load(personaId);
+
+      console.log(`=== Session End: ${persona.core.frontmatter.name} ===\n`);
+
+      // 1. 蒸馏
+      const distiller = new SessionDistiller();
+      const distillResult = distiller.distill(sessionText);
+
+      console.log(`Distilled ${distillResult.entries.length} entries`);
+      for (const entry of distillResult.entries) {
+        persona.stm.entries.push(entry);
+      }
+
+      // 2. 更新状态
+      const updater = new StateUpdater();
+      const updateResult = updater.update(persona, distillResult.stateDelta);
+
+      if (updateResult.updated) {
+        console.log("State updated:");
+        for (const change of updateResult.changes) {
+          console.log(`  ${change.axis}: ${change.from} → ${change.to}`);
+        }
+        console.log(`  Round: ${persona.state.round}`);
+        if (updateResult.speedWheelChanged) {
+          console.log(`  SpeedWheel: ${persona.state.speedWheel}`);
+        }
+      }
+
+      // 3. 保存位格
+      saver.save(persona);
+      console.log("Persona saved");
+
+      // 4. 同步到 ZK
+      if (options.sync !== false) {
+        const sync = new PersonaSync();
+        const syncResult = await sync.syncStm(persona);
+        console.log(`Synced to ZK: ${syncResult.synced} entries`);
+      }
+
+      console.log("\n=== Session End Complete ===");
+    } catch (err) {
+      console.error("Error:", err instanceof Error ? err.message : String(err));
       process.exit(1);
     }
   });

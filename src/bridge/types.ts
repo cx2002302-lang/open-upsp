@@ -63,6 +63,14 @@ export interface NetworkData {
   edges: Array<{ from: string; to: string; type: string }>;
 }
 
+export interface CreateNoteParams {
+  title: string;
+  content: string;
+  tags?: string[];
+  confidence?: number;
+  source?: "manual" | "distilled" | "ceqrc";
+}
+
 // KnowledgeBridge 抽象接口
 export interface KnowledgeBridge {
   searchNotes(query: string, limit?: number): SearchResult[];
