@@ -1,0 +1,377 @@
+import Database from "better-sqlite3";
+import type {
+  GraphPath,
+  KnowledgeBridge,
+  NetworkData,
+  SearchResult,
+  ZettelLink,
+  ZettelNote,
+} from "./types.js";
+
+export class ZettelkastenVersionError extends Error {
+  constructor(
+    public readonly actualVersion: string,
+    public readonly expectedVersions: string[],
+  ) {
+    super(
+      `Zettelkasten schema version ${actualVersion} is not compatible. ` +
+        `Expected one of: ${expectedVersions.join(", ")}`,
+    );
+    this.name = "ZettelkastenVersionError";
+  }
+}
+
+export class ZettelkastenConnectionError extends Error {
+  constructor(
+    message: string,
+    public readonly cause?: unknown,
+  ) {
+    super(message);
+    this.name = "ZettelkastenConnectionError";
+  }
+}
+
+export interface SQLiteBridgeOptions {
+  dbPath: string;
+  compatibleSchemaVersions: string[];
+  retryAttempts?: number;
+  retryDelayMs?: number;
+}
+
+export class SQLiteBridge implements KnowledgeBridge {
+  private db: Database.Database | null = null;
+  private readonly options: Required<SQLiteBridgeOptions>;
+
+  constructor(options: SQLiteBridgeOptions) {
+    this.options = {
+      retryAttempts: 3,
+      retryDelayMs: 100,
+      ...options,
+    };
+  }
+
+  private connect(): Database.Database {
+    if (this.db) return this.db;
+
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= this.options.retryAttempts; attempt++) {
+      try {
+        const db = new Database(this.options.dbPath, { readonly: true });
+        this.checkSchemaVersion(db);
+        this.db = db;
+        return db;
+      } catch (err) {
+        lastError = err;
+        if (err instanceof ZettelkastenVersionError) throw err;
+
+        // 数据库被锁 (SQLITE_BUSY) → 重试
+        const isBusy =
+          err instanceof Error &&
+          (err.message.includes("SQLITE_BUSY") || err.message.includes("database is locked"));
+
+        if (isBusy && attempt < this.options.retryAttempts) {
+          const delay = this.options.retryDelayMs * 3 ** (attempt - 1);
+          // 同步延迟（better-sqlite3 是同步的）
+          const start = Date.now();
+          while (Date.now() - start < delay) {
+            // 忙等待
+          }
+          continue;
+        }
+
+        // 其他错误或最后一次重试失败
+        break;
+      }
+    }
+
+    // 构建友好错误信息
+    const err = lastError instanceof Error ? lastError : new Error(String(lastError));
+    if (err.message.includes("unable to open database file")) {
+      throw new ZettelkastenConnectionError(
+        `Zettelkasten database not found at "${this.options.dbPath}". ` +
+          `Run "zk init" to initialize the database.`,
+        err,
+      );
+    }
+    if (err.message.includes("SQLITE_CANTOPEN")) {
+      throw new ZettelkastenConnectionError(
+        `Cannot open Zettelkasten database. Check permissions: chmod 644 "${this.options.dbPath}"`,
+        err,
+      );
+    }
+
+    throw new ZettelkastenConnectionError(
+      `Failed to connect to Zettelkasten database: ${err.message}`,
+      err,
+    );
+  }
+
+  private checkSchemaVersion(db: Database.Database): void {
+    try {
+      const row = db.prepare("SELECT value FROM zettel_meta WHERE key = 'schema_version'").get() as
+        | { value: string }
+        | undefined;
+
+      if (!row) {
+        throw new ZettelkastenVersionError("unknown", this.options.compatibleSchemaVersions);
+      }
+
+      const version = row.value;
+      if (!this.options.compatibleSchemaVersions.includes(version)) {
+        throw new ZettelkastenVersionError(version, this.options.compatibleSchemaVersions);
+      }
+    } catch (err) {
+      if (err instanceof ZettelkastenVersionError) throw err;
+      // 如果 zettel_meta 表不存在，说明是极旧版本
+      throw new ZettelkastenVersionError("unknown", this.options.compatibleSchemaVersions);
+    }
+  }
+
+  close(): void {
+    if (this.db) {
+      this.db.close();
+      this.db = null;
+    }
+  }
+
+  // =========================================================================
+  // 只读查询方法
+  // =========================================================================
+
+  searchNotes(query: string, limit = 20): SearchResult[] {
+    const db = this.connect();
+
+    // 使用 FTS5 全文搜索（如果可用）
+    const hasFts = this.hasTable(db, "zettel_fts");
+
+    if (hasFts) {
+      return this.searchWithFts(db, query, limit);
+    }
+
+    // 降级：LIKE 搜索
+    return this.searchWithLike(db, query, limit);
+  }
+
+  private searchWithFts(db: Database.Database, query: string, limit: number): SearchResult[] {
+    const stmt = db.prepare(`
+      SELECT n.id, n.title, n.content, n.summary, n.type, n.status, n.folder,
+             n.confidence, n.source, n.reviewed, n.session_key, n.file_path,
+             n.created_at, n.updated_at,
+             rank AS score
+      FROM zettel_notes n
+      JOIN zettel_fts fts ON n.id = fts.rowid
+      WHERE zettel_fts MATCH ?
+        AND n.folder != 'archive'
+      ORDER BY rank
+      LIMIT ?
+    `);
+
+    const rows = stmt.all(query, limit) as Array<Record<string, unknown>>;
+    return rows.map((row) => this.toSearchResult(db, row));
+  }
+
+  private searchWithLike(db: Database.Database, query: string, limit: number): SearchResult[] {
+    const pattern = `%${query}%`;
+    const stmt = db.prepare(`
+      SELECT id, title, content, summary, type, status, folder,
+             confidence, source, reviewed, session_key, file_path,
+             created_at, updated_at,
+             1.0 AS score
+      FROM zettel_notes
+      WHERE (title LIKE ? OR content LIKE ?)
+        AND folder != 'archive'
+      ORDER BY updated_at DESC
+      LIMIT ?
+    `);
+
+    const rows = stmt.all(pattern, pattern, limit) as Array<Record<string, unknown>>;
+    return rows.map((row) => this.toSearchResult(db, row));
+  }
+
+  getNote(id: string): ZettelNote | null {
+    const db = this.connect();
+
+    const row = db
+      .prepare(
+        `
+      SELECT id, title, content, summary, type, status, folder,
+             confidence, source, reviewed, session_key, file_path,
+             created_at, updated_at
+      FROM zettel_notes
+      WHERE id = ?
+    `,
+      )
+      .get(id) as Record<string, unknown> | undefined;
+
+    if (!row) return null;
+
+    return this.toNote(db, row);
+  }
+
+  getBacklinks(noteId: string): ZettelLink[] {
+    const db = this.connect();
+
+    const stmt = db.prepare(`
+      SELECT from_note_id, to_note_id, type, context, created_at
+      FROM zettel_links
+      WHERE to_note_id = ?
+    `);
+
+    const rows = stmt.all(noteId) as Array<Record<string, unknown>>;
+    return rows.map((row) => this.toLink(row));
+  }
+
+  findPath(from: string, to: string): GraphPath | null {
+    const db = this.connect();
+
+    // BFS 最短路径
+    const visited = new Set<string>();
+    const queue: Array<{ id: string; path: string[] }> = [{ id: from, path: [from] }];
+
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+
+      if (current.id === to) {
+        return {
+          path: current.path,
+          length: current.path.length,
+          stepCount: current.path.length - 1,
+          totalWeight: current.path.length - 1,
+          explanation: `Path found: ${current.path.join(" → ")}`,
+        };
+      }
+
+      if (visited.has(current.id)) continue;
+      visited.add(current.id);
+
+      const stmt = db.prepare("SELECT to_note_id FROM zettel_links WHERE from_note_id = ?");
+      const neighbors = stmt.all(current.id) as Array<{ to_note_id: string }>;
+
+      for (const neighbor of neighbors) {
+        if (!visited.has(neighbor.to_note_id)) {
+          queue.push({
+            id: neighbor.to_note_id,
+            path: [...current.path, neighbor.to_note_id],
+          });
+        }
+      }
+    }
+
+    return null;
+  }
+
+  getNetworkGraph(limit = 200): NetworkData {
+    const db = this.connect();
+
+    const notes = db
+      .prepare(
+        `
+      SELECT id, title
+      FROM zettel_notes
+      WHERE folder != 'archive'
+      LIMIT ?
+    `,
+      )
+      .all(limit) as Array<{ id: string; title: string }>;
+
+    const links = db
+      .prepare(
+        `
+      SELECT from_note_id, to_note_id, type
+      FROM zettel_links
+      WHERE from_note_id IN (${notes.map(() => "?").join(",")})
+    `,
+      )
+      .all(...notes.map((n) => n.id)) as Array<{
+      from_note_id: string;
+      to_note_id: string;
+      type: string;
+    }>;
+
+    return {
+      nodes: notes.map((n) => ({
+        id: n.id,
+        title: n.title,
+        glow: 0.5, // 简化，实际应从 zettel_note_stats 计算
+      })),
+      edges: links.map((l) => ({
+        from: l.from_note_id,
+        to: l.to_note_id,
+        type: l.type,
+      })),
+    };
+  }
+
+  // =========================================================================
+  // 辅助方法
+  // =========================================================================
+
+  private hasTable(db: Database.Database, tableName: string): boolean {
+    const row = db
+      .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?")
+      .get(tableName) as { 1: number } | undefined;
+    return row !== undefined;
+  }
+
+  private toNote(db: Database.Database, row: Record<string, unknown>): ZettelNote {
+    const id = String(row.id);
+
+    // 查询标签
+    const tagsStmt = db.prepare(`
+      SELECT t.name
+      FROM zettel_tags t
+      JOIN zettel_note_tags nt ON t.id = nt.tag_id
+      WHERE nt.note_id = ?
+    `);
+    const tagRows = tagsStmt.all(id) as Array<{ name: string }>;
+
+    // 查询链接
+    const linksStmt = db.prepare(`
+      SELECT to_note_id, type, context, created_at
+      FROM zettel_links
+      WHERE from_note_id = ?
+    `);
+    const linkRows = linksStmt.all(id) as Array<Record<string, unknown>>;
+
+    return {
+      id,
+      title: String(row.title),
+      content: String(row.content),
+      summary: row.summary ? String(row.summary) : null,
+      type: String(row.type) as ZettelNote["type"],
+      status: String(row.status) as ZettelNote["status"],
+      folder: String(row.folder) as ZettelNote["folder"],
+      confidence: row.confidence ? Number(row.confidence) : null,
+      source: row.source ? (String(row.source) as ZettelNote["source"]) : null,
+      reviewed: Boolean(row.reviewed),
+      sessionKey: row.session_key ? String(row.session_key) : null,
+      filePath: String(row.file_path),
+      createdAt: String(row.created_at),
+      updatedAt: String(row.updated_at),
+      tags: tagRows.map((t) => t.name),
+      links: linkRows.map((r) => this.toLink(r)),
+    };
+  }
+
+  private toSearchResult(db: Database.Database, row: Record<string, unknown>): SearchResult {
+    const note = this.toNote(db, row);
+
+    // 生成摘要片段
+    const snippet = `${note.content.slice(0, 200).replace(/\n/g, " ")}...`;
+
+    return {
+      note,
+      score: row.score ? Number(row.score) : 1.0,
+      snippet: snippet.length > note.content.length ? null : snippet,
+    };
+  }
+
+  private toLink(row: Record<string, unknown>): ZettelLink {
+    return {
+      to: String(row.to_note_id ?? row.to),
+      type: String(row.type) as ZettelLink["type"],
+      context: row.context ? String(row.context) : null,
+      createdAt: String(row.created_at),
+    };
+  }
+}

@@ -1,0 +1,26 @@
+# Internal documents - DO NOT publish to GitHub
+AGENTS.md
+ANALYSIS_UPSP_ZETTELKASTEN.md
+PROGRESS.md
+
+# Private configuration
+.env
+.env.local
+*.local.json
+.openclaw/          # 本地 OpenClaw 配置（如果在项目目录中）
+.personas/          # 本地位格数据（如果在项目目录中）
+
+# Test artifacts
+coverage/
+*.test.db
+*.test.db-journal
+tests/fixtures/temp/
+
+# Node.js
+node_modules/
+dist/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
