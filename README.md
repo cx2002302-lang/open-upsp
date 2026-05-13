@@ -56,6 +56,17 @@ Instead of losing context every time a conversation ends, open-upsp maintains a 
 
 ---
 
+## 📋 System Requirements
+
+| Component | Version | Required For |
+|-----------|---------|-------------|
+| Node.js | >= 22 | Core CLI |
+| OpenClaw | >= 2026.4.24 | Agent Skill integration (optional) |
+
+> OpenClaw is **optional** — open-upsp CLI works standalone without it. However, the Zettelkasten deep-memory plugin and Agent Skill integration require OpenClaw >= 2026.4.24.
+
+---
+
 ## 🚀 Quick Start
 
 ```bash

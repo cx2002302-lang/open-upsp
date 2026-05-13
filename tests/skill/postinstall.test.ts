@@ -203,6 +203,78 @@ describe("Postinstall Script", () => {
       expect(content).toContain("SKILL_ID");
     });
 
+    it("should declare minimum OpenClaw version", () => {
+      const content = readFileSync(POSTINSTALL_PATH, "utf8");
+      expect(content).toContain("MIN_OPENCLAW_VERSION");
+      expect(content).toContain("2026.4.24");
+    });
+
+    it("should have OpenClaw version parsing functions", () => {
+      const content = readFileSync(POSTINSTALL_PATH, "utf8");
+      expect(content).toContain("parseOpenClawVersion");
+      expect(content).toContain("compareVersion");
+      expect(content).toContain("checkOpenClawVersion");
+    });
+
+    it("should validate OpenClaw version in main flow", () => {
+      const content = readFileSync(POSTINSTALL_PATH, "utf8");
+      expect(content).toContain("checkOpenClawVersion()");
+      expect(content).toContain("OpenClaw 版本不满足要求");
+    });
+  });
+
+  describe("Version parsing logic", () => {
+    // Replicate the parsing logic for direct testing
+    function parseOpenClawVersion(output: string): number[] | null {
+      const match = output.match(/OpenClaw\s+(\d+)\.(\d+)\.(\d+)/);
+      if (!match) return null;
+      return [parseInt(match[1], 10), parseInt(match[2], 10), parseInt(match[3], 10)];
+    }
+
+    function compareVersion(a: number[], b: number[]): number {
+      for (let i = 0; i < 3; i++) {
+        if (a[i] > b[i]) return 1;
+        if (a[i] < b[i]) return -1;
+      }
+      return 0;
+    }
+
+    it("should parse valid version output", () => {
+      expect(parseOpenClawVersion("OpenClaw 2026.4.24 (cbcfdf6)")).toEqual([2026, 4, 24]);
+      expect(parseOpenClawVersion("OpenClaw 2027.1.15 (abcdef1)")).toEqual([2027, 1, 15]);
+    });
+
+    it("should return null for invalid output", () => {
+      expect(parseOpenClawVersion("not a version")).toBeNull();
+      expect(parseOpenClawVersion("")).toBeNull();
+    });
+
+    it("should compare versions correctly", () => {
+      const v2026_4_24 = [2026, 4, 24];
+      const v2026_5_1 = [2026, 5, 1];
+      const v2027_1_1 = [2027, 1, 1];
+
+      expect(compareVersion(v2026_4_24, v2026_4_24)).toBe(0);
+      expect(compareVersion(v2026_5_1, v2026_4_24)).toBe(1);
+      expect(compareVersion(v2026_4_24, v2026_5_1)).toBe(-1);
+      expect(compareVersion(v2027_1_1, v2026_4_24)).toBe(1);
+    });
+
+    it("should reject versions below minimum", () => {
+      const min = [2026, 4, 24];
+      expect(compareVersion([2026, 4, 23], min)).toBe(-1);
+      expect(compareVersion([2026, 3, 30], min)).toBe(-1);
+      expect(compareVersion([2025, 12, 31], min)).toBe(-1);
+    });
+
+    it("should accept versions at or above minimum", () => {
+      const min = [2026, 4, 24];
+      expect(compareVersion([2026, 4, 24], min)).toBe(0);
+      expect(compareVersion([2026, 4, 25], min)).toBe(1);
+      expect(compareVersion([2026, 5, 1], min)).toBe(1);
+      expect(compareVersion([2027, 1, 1], min)).toBe(1);
+    });
+
     it("should handle missing skill source gracefully", () => {
       const content = readFileSync(POSTINSTALL_PATH, "utf8");
       expect(content).toContain("找不到 skill 源目录");

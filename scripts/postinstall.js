@@ -17,6 +17,48 @@ const OPENCLAW_DIR = path.join(process.env.HOME || process.env.USERPROFILE || ""
 const OPENCLAW_CONFIG = path.join(OPENCLAW_DIR, "openclaw.json");
 const SKILL_DIR = path.join(OPENCLAW_DIR, "skills", SKILL_ID);
 
+const MIN_OPENCLAW_VERSION = "2026.4.24";
+
+function parseOpenClawVersion(output) {
+  const match = output.match(/OpenClaw\s+(\d+)\.(\d+)\.(\d+)/);
+  if (!match) return null;
+  return [parseInt(match[1], 10), parseInt(match[2], 10), parseInt(match[3], 10)];
+}
+
+function compareVersion(a, b) {
+  for (let i = 0; i < 3; i++) {
+    if (a[i] > b[i]) return 1;
+    if (a[i] < b[i]) return -1;
+  }
+  return 0;
+}
+
+function checkOpenClawVersion() {
+  let output;
+  try {
+    output = execSync("openclaw --version", { encoding: "utf8", stdio: ["pipe", "pipe", "ignore"] });
+  } catch {
+    log("warn", "无法获取 OpenClaw 版本");
+    return false;
+  }
+
+  const actual = parseOpenClawVersion(output);
+  if (!actual) {
+    log("warn", `无法解析 OpenClaw 版本: ${output.trim()}`);
+    return false;
+  }
+
+  const required = parseOpenClawVersion(`OpenClaw ${MIN_OPENCLAW_VERSION}`);
+  if (compareVersion(actual, required) < 0) {
+    log("warn", `OpenClaw 版本过低: ${actual.join(".")}，需要 >= ${MIN_OPENCLAW_VERSION}`);
+    log("info", "  请升级 OpenClaw 后重新运行安装");
+    return false;
+  }
+
+  log("ok", `OpenClaw v${actual.join(".")} ✓`);
+  return true;
+}
+
 const COLORS = {
   info: "\x1b[34m",
   ok: "\x1b[32m",
@@ -220,7 +262,13 @@ function main() {
   // 检测 OpenClaw
   if (!fs.existsSync(OPENCLAW_CONFIG)) {
     log("warn", "OpenClaw 未检测到，跳过 Agent 集成");
-    log("info", "  CLI 工具已安装。如需 Agent 集成，请先安装 OpenClaw。");
+    log("info", "  CLI 工具已安装。如需 Agent 集成，请先安装 OpenClaw >= 2026.4.24。");
+    return;
+  }
+
+  // 检查 OpenClaw 版本
+  if (!checkOpenClawVersion()) {
+    log("warn", "OpenClaw 版本不满足要求，跳过 Agent 集成");
     return;
   }
 

@@ -56,6 +56,17 @@
 
 ---
 
+## 📋 系统要求
+
+| 组件 | 版本 | 用途 |
+|------|------|------|
+| Node.js | >= 22 | 核心 CLI |
+| OpenClaw | >= 2026.4.24 | Agent Skill 集成（可选） |
+
+> OpenClaw 是**可选依赖**——open-upsp CLI 可以独立运行。但 Zettelkasten 深度记忆插件和 Agent Skill 集成需要 OpenClaw >= 2026.4.24。
+
+---
+
 ## 🚀 快速开始
 
 ```bash

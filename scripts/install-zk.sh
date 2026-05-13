@@ -37,9 +37,33 @@ find_zk_archive() {
   return 1
 }
 
+MIN_OPENCLAW_VERSION="2026.4.24"
+
 # 检测 openclaw 是否可用
 check_openclaw() {
   command -v openclaw &>/dev/null
+}
+
+# 检测 openclaw 版本是否满足要求
+check_openclaw_version() {
+  if ! check_openclaw; then
+    return 1
+  fi
+
+  local actual_version
+  actual_version=$(openclaw --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+  if [ -z "$actual_version" ]; then
+    log_warn "无法解析 OpenClaw 版本"
+    return 1
+  fi
+
+  if [ "$(printf '%s\n' "$actual_version" "$MIN_OPENCLAW_VERSION" | sort -V | head -n1)" != "$MIN_OPENCLAW_VERSION" ]; then
+    log_warn "OpenClaw 版本过低: v${actual_version}，需要 >= ${MIN_OPENCLAW_VERSION}"
+    log_info "  ZK 插件需要 OpenClaw >= ${MIN_OPENCLAW_VERSION} 的插件 SDK API"
+    return 1
+  fi
+
+  return 0
 }
 
 # 检测 ZK 是否已安装
@@ -130,8 +154,8 @@ install_zk() {
 
   log_info "安装包: $(basename "$archive")"
 
-  if ! check_openclaw; then
-    log_warn "openclaw CLI 不可用，无法自动安装 ZK"
+  if ! check_openclaw_version; then
+    log_warn "openclaw CLI 不可用或版本不满足，无法自动安装 ZK"
     log_info "  请先安装 OpenClaw，然后手动运行: openclaw plugins install <archive>"
     return 1
   fi
@@ -193,9 +217,9 @@ main() {
     return 0
   fi
 
-  # 2. 检查 openclaw 是否可用
-  if ! check_openclaw; then
-    log_warn "OpenClaw 未检测到，跳过 ZK 安装"
+  # 2. 检查 openclaw 是否可用且版本满足
+  if ! check_openclaw_version; then
+    log_warn "OpenClaw 未检测到或版本不满足，跳过 ZK 安装"
     log_info "  open-upsp CLI 仍可独立运行（无知识库集成）"
     log_info "  如需知识库功能，请先安装 OpenClaw 后重新运行安装脚本"
     return 0

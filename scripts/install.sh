@@ -51,16 +51,40 @@ check_node() {
   log_ok "Node.js v${NODE_VERSION} ✓"
 }
 
+MIN_OPENCLAW_VERSION="2026.4.24"
+
 check_openclaw() {
   log_info "检测 OpenClaw 环境..."
   if [ -f "$OPENCLAW_CONFIG" ]; then
     log_ok "OpenClaw 已安装 ✓"
-    return 0
   else
     log_warn "OpenClaw 未检测到（~/.openclaw/openclaw.json 不存在）"
     log_info "  CLI 工具将正常安装，但 Agent 集成需手动完成"
     return 1
   fi
+
+  # 版本检查
+  if ! command -v openclaw &>/dev/null; then
+    log_warn "openclaw CLI 不在 PATH 中，无法验证版本"
+    return 1
+  fi
+
+  local actual_version
+  actual_version=$(openclaw --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+  if [ -z "$actual_version" ]; then
+    log_warn "无法解析 OpenClaw 版本"
+    return 1
+  fi
+
+  # 版本比较 (sort -V)
+  if [ "$(printf '%s\n' "$actual_version" "$MIN_OPENCLAW_VERSION" | sort -V | head -n1)" != "$MIN_OPENCLAW_VERSION" ]; then
+    log_err "OpenClaw 版本过低: v${actual_version}，需要 >= ${MIN_OPENCLAW_VERSION}"
+    log_info "  请升级 OpenClaw 后重新运行此脚本"
+    return 1
+  fi
+
+  log_ok "OpenClaw v${actual_version} >= ${MIN_OPENCLAW_VERSION} ✓"
+  return 0
 }
 
 check_cli() {
