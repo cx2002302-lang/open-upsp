@@ -1,0 +1,110 @@
+{
+  "version": "0.3.0",
+  "test_type": "stress",
+  "timestamp": "2026-05-13T11:27:57+08:00",
+  "environment": {
+    "node": "v22.22.2",
+    "open_upsp": "0.3.0",
+    "os": "Linux x86_64",
+    "test_base": "/tmp/open-upsp-stress-test-451232"
+  },
+  "scenes": [
+    {
+      "scene": 1,
+      "label": "空位格初始化",
+      "init_ok": true,
+      "state_snapshots": 2
+    },
+    {
+      "scene": 2,
+      "label": "轻量对话",
+      "init_ok": true,
+      "state_snapshots": 2
+    },
+    {
+      "scene": 3,
+      "label": "技术讨论(3轮)",
+      "init_ok": true,
+      "state_snapshots": 6
+    },
+    {
+      "scene": 4,
+      "label": "情感对话",
+      "init_ok": true,
+      "state_snapshots": 2
+    },
+    {
+      "scene": 5,
+      "label": "创意风暴",
+      "init_ok": true,
+      "state_snapshots": 2
+    },
+    {
+      "scene": 6,
+      "label": "学术研究",
+      "init_ok": true,
+      "state_snapshots": 2
+    },
+    {
+      "scene": 7,
+      "label": "大数据量(50STM+20关系)",
+      "init_ok": true,
+      "state_snapshots": 2,
+      "note": "数据预制（非 init 创建）"
+    },
+    {
+      "scene": 8,
+      "label": "10轮连续演化",
+      "init_ok": true,
+      "state_snapshots": 20
+    },
+    {
+      "scene": 9,
+      "label": "边界条件压力",
+      "init_ok": true,
+      "state_snapshots": 1
+    },
+    {
+      "scene": 10,
+      "label": "错误恢复与降级",
+      "init_ok": true,
+      "state_snapshots": 0,
+      "note": "错误恢复测试，无 state 快照"
+    }
+  ],
+  "performance": {
+    "context_big_data_ms": 69,
+    "scene8_rounds": 10,
+    "timeline_summary": {
+      "rounds_executed": 10,
+      "initial_speed_wheel": "low",
+      "final_speed_wheel": "low",
+      "initial_workhood": 0.07,
+      "final_workhood": 0.07
+    }
+  },
+  "boundary_tests": {
+    "long_text_distill": true,
+    "special_chars_distill": true,
+    "empty_text_distill": true,
+    "long_text_session": true,
+    "special_chars_session": true
+  },
+  "error_recovery": {
+    "zk_unavailable_degraded": true,
+    "missing_core_file_error": true,
+    "bad_json_state_error": true
+  },
+  "moments": {
+    "M1_creation": "/tmp/open-upsp-stress-test-451232/results/moments/M1-creation.md",
+    "M2_heartbeat": "/tmp/open-upsp-stress-test-451232/results/moments/M2-heartbeat.md",
+    "M3_memory_galaxy": "/tmp/open-upsp-stress-test-451232/results/moments/M3-memory-galaxy.md",
+    "M4_relations": "/tmp/open-upsp-stress-test-451232/results/moments/M4-relations.md",
+    "M5_emotion_timeline": "/tmp/open-upsp-stress-test-451232/results/moments/M5-emotion-timeline.md",
+    "M6_knowledge": "/tmp/open-upsp-stress-test-451232/results/moments/M6-knowledge.md",
+    "M7_speedwheel": "/tmp/open-upsp-stress-test-451232/results/moments/M7-speedwheel.md",
+    "M8_zk_bridge": "/tmp/open-upsp-stress-test-451232/results/moments/M8-zk-bridge.md"
+  },
+  "pass_rate": "10/10",
+  "overall_status": "PASS"
+}

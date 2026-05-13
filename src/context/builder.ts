@@ -1,5 +1,6 @@
 import type { KnowledgeBridge } from "../bridge/types.js";
 import type { Persona } from "../persona/types.js";
+import { evolutionLoader } from "../skill/evolution-loader.js";
 
 export interface BuildContextOptions {
   query?: string; // 搜索关键词，如果提供则检索 ZK
@@ -28,6 +29,9 @@ export class ContextBuilder {
     if (options.query) {
       parts.push(this.buildKnowledge(options.query, resonanceMap));
     }
+
+    // 渐进披露：进化模块
+    parts.push(this.buildEvolution(persona));
 
     return parts.filter(Boolean).join("\n\n---\n\n");
   }
@@ -130,6 +134,19 @@ export class ContextBuilder {
     }
 
     return lines.join("\n");
+  }
+
+  private buildEvolution(persona: Persona): string {
+    if (evolutionLoader.isUnlocked(persona)) {
+      const content = evolutionLoader.loadEvolvableContent();
+      if (content) {
+        return `# 进化模块（已解锁）\n\n${content}`;
+      }
+      return "# 进化模块（已解锁）\n\n进化参数已生效，当前使用自定义配置。";
+    }
+
+    // 未解锁：显示进度提示
+    return evolutionLoader.getProgressHint(persona);
   }
 
   private buildKnowledge(query: string, resonanceMap: Map<string, number>): string {

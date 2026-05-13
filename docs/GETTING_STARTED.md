@@ -2,14 +2,21 @@
 
 ## 安装
 
-### 通过 npm
+### 方式 1: npm（推荐，自动集成 OpenClaw Agent）
 
 ```bash
 npm install -g open-upsp
-# 安装后可用 open-upsp 或简写 upsp
 ```
 
-### 通过源码
+npm postinstall 会自动检测 OpenClaw 环境并集成 skill。
+
+### 方式 2: 独立脚本
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/your-org/open-upsp/main/scripts/install.sh | bash
+```
+
+### 方式 3: 源码安装
 
 ```bash
 git clone https://github.com/your-org/open-upsp.git
@@ -17,6 +24,7 @@ cd open-upsp
 npm install
 npm run build
 npm link
+./scripts/install.sh   # 手动执行 Agent 集成
 ```
 
 ---

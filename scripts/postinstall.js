@@ -1,0 +1,244 @@
+#!/usr/bin/env node
+/**
+ * open-upsp npm postinstall 钩子
+ * 在 `npm install -g open-upsp` 后自动执行，完成 OpenClaw Agent 集成
+ */
+
+import { execSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const SKILL_ID = "open-upsp";
+const OPENCLAW_DIR = path.join(process.env.HOME || process.env.USERPROFILE || "", ".openclaw");
+const OPENCLAW_CONFIG = path.join(OPENCLAW_DIR, "openclaw.json");
+const SKILL_DIR = path.join(OPENCLAW_DIR, "skills", SKILL_ID);
+
+const COLORS = {
+  info: "\x1b[34m",
+  ok: "\x1b[32m",
+  warn: "\x1b[33m",
+  err: "\x1b[31m",
+  reset: "\x1b[0m",
+};
+
+function log(level, msg) {
+  const c = COLORS[level] || "";
+  const r = COLORS.reset;
+  const label = level === "ok" ? "[OK]" : level === "warn" ? "[WARN]" : level === "err" ? "[ERR]" : "[INFO]";
+  console.log(`${c}${label}${r} ${msg}`);
+}
+
+function isGlobalInstall() {
+  // 检测是否为全局安装：检查当前脚本是否在全局 node_modules 中
+  const globalRoot = execSync("npm root -g", { encoding: "utf8" }).trim();
+  return __dirname.startsWith(globalRoot);
+}
+
+function findSkillSource() {
+  // 可能的 skill 源路径
+  const candidates = [
+    path.join(__dirname, "..", "skill"), // 源码/本地安装
+    path.join(process.cwd(), "skill"), // 当前工作目录
+  ];
+
+  for (const p of candidates) {
+    if (fs.existsSync(path.join(p, "SKILL.md"))) {
+      return p;
+    }
+  }
+  return null;
+}
+
+function backupIfExists(target) {
+  if (fs.existsSync(target)) {
+    const backup = `${target}.backup.${new Date().toISOString().replace(/[:.]/g, "")}`;
+    fs.cpSync(target, backup, { recursive: true });
+    log("warn", `已有目录已备份: ${backup}`);
+    fs.rmSync(target, { recursive: true, force: true });
+  }
+}
+
+function installSkill() {
+  const src = findSkillSource();
+  if (!src) {
+    log("warn", "找不到 skill 源目录，跳过 Skill 安装");
+    log("info", "  如需 Agent 集成，请手动复制 skill/ 到 ~/.openclaw/skills/open-upsp/");
+    return false;
+  }
+
+  log("info", `Skill 源: ${src}`);
+  backupIfExists(SKILL_DIR);
+  fs.mkdirSync(path.dirname(SKILL_DIR), { recursive: true });
+  fs.cpSync(src, SKILL_DIR, { recursive: true });
+  log("ok", `Skill 已安装到 ${SKILL_DIR}`);
+  return true;
+}
+
+function configureOpenClaw() {
+  if (!fs.existsSync(OPENCLAW_CONFIG)) {
+    log("warn", "OpenClaw 配置文件不存在，跳过配置");
+    return false;
+  }
+
+  // 备份
+  const backup = `${OPENCLAW_CONFIG}.backup.${new Date().toISOString().replace(/[:.]/g, "")}`;
+  fs.copyFileSync(OPENCLAW_CONFIG, backup);
+  log("info", `配置已备份: ${backup}`);
+
+  let data;
+  try {
+    const raw = fs.readFileSync(OPENCLAW_CONFIG, "utf8");
+    data = JSON.parse(raw);
+  } catch (e) {
+    log("err", `无法解析 openclaw.json: ${e.message}`);
+    return false;
+  }
+
+  // 确保结构存在
+  if (!data.agents) data.agents = {};
+  if (!data.agents.defaults) data.agents.defaults = {};
+  if (!Array.isArray(data.agents.defaults.skills)) {
+    data.agents.defaults.skills = [];
+  }
+  if (!data.tools) data.tools = {};
+  if (!Array.isArray(data.tools.alsoAllow)) {
+    data.tools.alsoAllow = [];
+  }
+
+  // 去重追加
+  let modified = false;
+  if (!data.agents.defaults.skills.includes(SKILL_ID)) {
+    data.agents.defaults.skills.push(SKILL_ID);
+    log("info", `已添加 ${SKILL_ID} 到 agents.defaults.skills`);
+    modified = true;
+  }
+  if (!data.tools.alsoAllow.includes(SKILL_ID)) {
+    data.tools.alsoAllow.push(SKILL_ID);
+    log("info", `已添加 ${SKILL_ID} 到 tools.alsoAllow`);
+    modified = true;
+  }
+
+  if (!modified) {
+    log("info", `${SKILL_ID} 已在配置中，无需修改`);
+  }
+
+  try {
+    fs.writeFileSync(OPENCLAW_CONFIG, JSON.stringify(data, null, 2) + "\n");
+    log("ok", "OpenClaw 配置已更新");
+    return true;
+  } catch (e) {
+    log("err", `写入配置失败: ${e.message}`);
+    return false;
+  }
+}
+
+function verify() {
+  let ok = true;
+
+  if (fs.existsSync(SKILL_DIR)) {
+    log("ok", `Skill 目录: ${SKILL_DIR}`);
+  } else {
+    log("warn", "Skill 目录未找到");
+    ok = false;
+  }
+
+  if (fs.existsSync(OPENCLAW_CONFIG)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(OPENCLAW_CONFIG, "utf8"));
+      const hasSkill = data.agents?.defaults?.skills?.includes(SKILL_ID);
+      const hasAllow = data.tools?.alsoAllow?.includes(SKILL_ID);
+      if (hasSkill && hasAllow) {
+        log("ok", "OpenClaw skill 已激活");
+      } else {
+        log("warn", "OpenClaw skill 可能未正确激活");
+        ok = false;
+      }
+    } catch {
+      log("warn", "无法验证 OpenClaw 配置");
+    }
+  }
+
+  return ok;
+}
+
+// ============ 主流程 ============
+
+function installZkPlugin() {
+  const vendorDir = path.join(__dirname, "..", "vendor");
+  if (!fs.existsSync(vendorDir)) {
+    log("info", "vendor/ 目录不存在，跳过 ZK 检测");
+    return;
+  }
+
+  const archives = fs.readdirSync(vendorDir).filter((f) => f.startsWith("zettelkasten-plugin-") && f.endsWith(".tar.gz"));
+  if (archives.length === 0) {
+    log("info", "未找到 ZK 插件包，跳过");
+    return;
+  }
+
+  const archive = path.join(vendorDir, archives[0]);
+
+  // 检测 ZK 是否已安装
+  const zkPluginDir = path.join(OPENCLAW_DIR, "zettelkasten-plugin");
+  if (fs.existsSync(path.join(zkPluginDir, "plugin", "openclaw.plugin.json"))) {
+    log("info", "ZK 插件已安装，跳过");
+    return;
+  }
+
+  // 检测 openclaw 是否可用
+  try {
+    execSync("which openclaw", { stdio: "ignore" });
+  } catch {
+    log("warn", "openclaw CLI 不可用，跳过 ZK 安装");
+    return;
+  }
+
+  log("info", "正在安装 Zettelkasten 插件（非交互模式，默认安装）...");
+  try {
+    execSync(`openclaw plugins install "${archive}"`, { stdio: "inherit" });
+    execSync("openclaw plugins enable zettelkasten", { stdio: "ignore" });
+    log("ok", "ZK 插件安装成功");
+  } catch (e) {
+    log("warn", `ZK 插件安装失败: ${e.message}`);
+    log("info", "  可稍后手动运行: openclaw plugins install <archive>");
+  }
+}
+
+function main() {
+  // 仅全局安装时执行
+  if (!isGlobalInstall()) {
+    log("info", "本地安装 detected，跳过 OpenClaw 集成（全局安装时自动执行）");
+    return;
+  }
+
+  log("info", "open-upsp postinstall — 正在配置 OpenClaw Agent 集成...");
+
+  // 检测 OpenClaw
+  if (!fs.existsSync(OPENCLAW_CONFIG)) {
+    log("warn", "OpenClaw 未检测到，跳过 Agent 集成");
+    log("info", "  CLI 工具已安装。如需 Agent 集成，请先安装 OpenClaw。");
+    return;
+  }
+
+  installSkill();
+  configureOpenClaw();
+  installZkPlugin();
+
+  if (verify()) {
+    console.log();
+    log("ok", "🎉 OpenClaw Agent 集成完成！");
+    console.log();
+    console.log("  快速开始:");
+    console.log("    open-upsp init          # 创建默认位格");
+    console.log("    open-upsp status        # 查看位格状态");
+    console.log();
+  } else {
+    log("warn", "集成验证未完全通过，请查看上方信息");
+  }
+}
+
+main();

@@ -1,0 +1,55 @@
+# open-upsp 进化参数
+# 版本: 0.3.0
+# 说明: 这些参数会被 open-upsp CLI 读取并实际生效
+#       修改后无需重启，下次 CLI 调用自动生效
+
+version: "0.3.0"
+
+limits:
+  state_update:
+    # 动态六轴单次最大变化
+    delta_max: 5
+    # 效价范围
+    valence_range: [-100, 100]
+    # 激活范围
+    arousal_range: [0, 100]
+    # 专注范围
+    focus_range: [0, 100]
+    # 情绪范围
+    mood_range: [0, 100]
+    # 幽默范围
+    humor_range: [0, 100]
+    # 安全范围
+    safety_range: [0, 100]
+
+  relation_update:
+    # 共振度单次最大变化
+    resonance_delta_max: 0.05
+
+  core_axis:
+    # 核心六轴变化所需轮数
+    change_threshold_rounds: 256
+    # 是否需要用户确认
+    requires_user_confirm: true
+
+memory:
+  # 每会话最大 STM 条目数
+  max_stm_entries_per_session: 5
+  # 同步到 ZK 的最小权重
+  sync_weight_threshold: 3
+  # 自动归档到 LTM
+  auto_archive: true
+
+search:
+  # ZK 搜索返回条数
+  depth: 20
+  # 自动建链的关联度阈值
+  link_threshold: 0.6
+
+behavior:
+  # 每次对话注入上下文
+  context_injection: true
+  # 自动记录有价值信息
+  auto_record: true
+  # 会话结束自动同步到 ZK
+  auto_sync: true

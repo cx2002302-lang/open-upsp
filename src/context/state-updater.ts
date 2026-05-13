@@ -1,4 +1,5 @@
 import type { Persona, State } from "../persona/types.js";
+import { evolutionLoader } from "../skill/evolution-loader.js";
 
 export interface StateUpdateResult {
   updated: boolean;
@@ -17,9 +18,9 @@ export interface StateUpdateResult {
  * - 变速轮根据轮数自动判断（每 256 轮一个周期）
  */
 export class StateUpdater {
-  private readonly maxDeltaPerSession = 5;
-
   update(persona: Persona, delta: Partial<State["dynamicAxes"]>): StateUpdateResult {
+    const params = evolutionLoader.loadParams();
+    const maxDelta = params.limits.stateUpdate.deltaMax;
     const changes: StateUpdateResult["changes"] = [];
     const axes = ["valence", "arousal", "focus", "mood", "humor", "safety"] as const;
 
@@ -27,11 +28,8 @@ export class StateUpdater {
       const rawDelta = delta[axis];
       if (rawDelta === undefined) continue;
 
-      // 限制单次调整幅度
-      const clampedDelta = Math.max(
-        -this.maxDeltaPerSession,
-        Math.min(this.maxDeltaPerSession, rawDelta),
-      );
+      // 限制单次调整幅度（读取进化参数）
+      const clampedDelta = Math.max(-maxDelta, Math.min(maxDelta, rawDelta));
 
       const current = persona.state.dynamicAxes[axis];
       const next = Math.max(0, Math.min(100, current + clampedDelta));

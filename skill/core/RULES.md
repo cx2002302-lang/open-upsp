@@ -1,7 +1,21 @@
-# open-upsp 行为规则
+# open-upsp 行为规则（核心）
 
-> **版本**: 0.1.0  
-> **调整方式**: 权重数值可手动修改，规则本身不建议删除
+> **版本**: 0.3.0  
+> **状态**: 🔒 不可变 — 本文件为声明性规则，实际执行阈值由 `../evolvable/PARAMS.yaml` 控制  
+> **进化**: 当 Round >= 10 且 workhoodIndex >= 0.3 时，进化模块解锁
+
+---
+
+## ⚠️ 重要声明
+
+**本文件为 Skill 核心规则的声明性文档。**
+
+- 编辑本文件**不会**改变 Agent 的行为
+- 实际运行时参数由 `skill/evolvable/PARAMS.yaml` 控制
+- 如需自定义行为，请编辑 `skill/evolvable/PARAMS.yaml` 和 `skill/evolvable/EXTENSIONS.md`
+- 核心规则（身份保护、安全约束）不可覆盖
+
+---
 
 ---
 
@@ -131,4 +145,22 @@ sync_weight_threshold: 3     # 同步到 ZK 的权重阈值
 
 ---
 
-*规则版本: 0.1.0 | Phase 2 | 用户可手动编辑调整权重*
+## 规则 8: 进化解锁（权重: 5 / 中）
+
+**触发**: 位格状态满足解锁条件
+**条件**:
+- Round >= 10
+- workhoodIndex >= 0.3
+
+**动作**:
+1. 加载 `skill/evolvable/PARAMS.yaml` 中的运行时参数
+2. 将进化参数注入 `open-upsp context` 输出
+3. Agent 获得在边界内调整自身参数的权限
+
+**说明**:
+进化模块是渐进披露的——位格在成长过程中逐步解锁更深层的自定义能力。
+这与 UPSP 的变速轮机制同构：低速轮积累足够后，才能进入高速轮。
+
+---
+
+*规则版本: 0.3.0 | 核心规则不可变 | 进化参数由 evolvable/PARAMS.yaml 控制*

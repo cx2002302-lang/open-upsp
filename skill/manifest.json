@@ -1,0 +1,20 @@
+{
+  "version": "0.3.0",
+  "id": "open-upsp",
+  "name": "open-upsp Persona Skill",
+  "description": "为 OpenClaw Agent 注入位格意识——稳定的身份、记忆与知识库",
+  "core": {
+    "path": "core",
+    "mutable": false,
+    "description": "不可变的安全核心。包含身份注入、行为约束、故障保护。"
+  },
+  "evolvable": {
+    "path": "evolvable",
+    "mutable": true,
+    "description": "渐进解锁的可进化模块。用户可编辑运行时参数和自定义规则。",
+    "unlockCondition": {
+      "round": 10,
+      "workhoodIndex": 0.3
+    }
+  }
+}

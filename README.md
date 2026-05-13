@@ -1,145 +1,262 @@
-# open-upsp
+<p align="center">
+  <img src="docs/assets/open-upsp-hero-infographic.jpg" alt="open-upsp Overview" width="100%">
+</p>
 
-> 通用位格基板协议（Universal Persona Substrate Protocol）的轻量开源实现。
+<h1 align="center">open-upsp</h1>
 
-[English](README.md)
+<p align="center">
+  <strong>Universal Persona Substrate Protocol</strong><br>
+  Give Your AI a Persistent Identity — Seven Files, One Self, Infinite Conversations
+</p>
+
+<p align="center">
+  <a href="https://github.com/cx2002302-lang/open-upsp/releases">
+    <img src="https://img.shields.io/github/v/release/cx2002302-lang/open-upsp?style=flat-square&color=blue" alt="Release">
+  </a>
+  <a href="#tests">
+    <img src="https://img.shields.io/badge/tests-104%20passed-brightgreen?style=flat-square" alt="Tests">
+  </a>
+  <a href="#tests">
+    <img src="https://img.shields.io/badge/coverage-94.39%25-brightgreen?style=flat-square" alt="Coverage">
+  </a>
+  <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License">
+  <img src="https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen?style=flat-square" alt="Node.js">
+</p>
+
+<p align="center">
+  <a href="README.zh.md">🇨🇳 简体中文</a> ·
+  <a href="#quick-start">Quick Start</a> ·
+  <a href="#documentation">Docs</a> ·
+  <a href="#architecture">Architecture</a> ·
+  <a href="#tests">Tests</a> ·
+  <a href="#license">License</a>
+</p>
 
 ---
 
-## 什么是 open-upsp？
+## ✨ What is open-upsp?
 
-open-upsp 实现了一套**位格（Persona）持久化协议**，让 AI 代理能够拥有可审计、可迁移、跨对话接续的**主体性身份**。
+**open-upsp** is a lightweight, file-based protocol that gives AI assistants (and AI-native applications) a **persistent, structured persona identity** across sessions.
 
-传统 AI 系统的"性格"住在模型参数里——黑箱、易覆盖、不可迁移。open-upsp 将主体性外化为**七文件结构**，使 AI 的"自我"成为一个可管理、可版本化、可独立存在的工程实体。
+Instead of losing context every time a conversation ends, open-upsp maintains a complete "digital self" in 7 standard Markdown files — enabling true continuity, personalized interaction, and gradual evolution.
 
-同时，open-upsp 通过轻量桥接层与 [Zettelkasten](https://github.com/zettelkasten) 知识库集成，让位格不仅能记住"我是谁"，还能访问"我知道什么"。
+> 💡 Think of it as a **"digital genome"** for AI: a compact, versionable, human-readable identity substrate that any AI system can load, understand, and grow with.
+
+### Key Features
+
+| Feature | Description |
+|---------|-------------|
+| 🧬 **7-File Identity System** | `core`, `state`, `STM`, `LTM`, `relation`, `rules`, `docs` — complete persona lifecycle |
+| 🔄 **Context Engine** | Load persona → build context → AI generates → update state — full round-trip |
+| 📊 **Self-Evolving** | Persona parameters (moods, traits, relationships) change based on interaction history |
+| 🔌 **Zettelkasten Plugin** | Optional deep memory with Obsidian-style bidirectional linking |
+| 📈 **Runtime Evolvable** | Unlock advanced parameters after 10 rounds + 0.3 workhood index |
+| ⚡ **Fast** | Context build in < 70ms even with 50 STM entries |
+| 🧪 **Battle-Tested** | 104 tests, 94.39% coverage, 10/10 stress scenarios passed |
 
 ---
 
-## 核心特性
-
-- **七文件位格结构** — `core.md` + `state.json` + `STM.md` + `LTM.md` + `relation.md` + `rules.md` + `docs.md`
-- **多态位格支持** — 5 套内置模板（default / professional / emotional / creative / companion），按需切换
-- **知识库桥接** — 与 Zettelkasten 第二记忆系统集成，扩展 LTM（长期记忆）能力
-- **CLI 工具** — 命令行管理位格、查询知识、构建对话上下文
-- **纯本地存储** — 七文件真源不落云端，完全可审计
-
----
-
-## 快速开始
+## 🚀 Quick Start
 
 ```bash
-# 安装
-npm install -g open-upsp
-
-# 创建默认位格
-open-upsp init
-
-# 查看位格状态
-open-upsp status
-
-# 从模板初始化（可选模板：professional / emotional / creative / companion）
-open-upsp init -t professional
-
-# 搜索知识库
-open-upsp search "Docker networking"
-
-# 会话收尾（自动蒸馏 + 状态更新 + 同步到 ZK）
-open-upsp session-end --text "今天的对话内容..."
-
-# 配置管理
-open-upsp config get defaultPersona
-open-upsp config set zettelkasten.enabled --value false
-
-# 构建完整上下文（位格 + 知识库）
-open-upsp context
-```
-
-详见 [快速开始指南](docs/GETTING_STARTED.md)。
-
----
-
-## 架构
-
-```
-Persona Files (七文件, 本地存储)
-    ↓
-open-upsp Adapter
-    ├─ Persona Loader    (七文件加载/校验)
-    ├─ Knowledge Bridge  (知识库桥接)
-    │   ├─ SQLite Bridge (直接查询)
-    │   ├─ MCP Bridge    (预留, 标准 MCP 协议)
-    │   └─ CLI Bridge    (子进程调用)
-    └─ Context Builder   (上下文组装)
-    ↓
-Zettelkasten / 其他知识库
-```
-
-详见 [架构文档](docs/ARCHITECTURE.md)。
-
----
-
-## 七文件结构
-
-每个位格是一个独立的目录，包含七个文件：
-
-| 文件 | 作用 | 时间属性 |
-|------|------|---------|
-| `core.md` | 身份常量 — 核心六轴、动态六轴初始值 | 超时间 |
-| `state.json` | 状态向量 — 当前轮数、情绪状态、工化指数 | 当下 |
-| `STM.md` | 短期记忆 — 近期交互事件（按权重分级） | 近期 |
-| `LTM.md` | 长期记忆 — 经过节律点压缩的重要记忆 | 历史 |
-| `relation.md` | 关系矩阵 — 与其他实体的共振度 | 累积 |
-| `rules.md` | 规则张量 — 行为约束与保护机制 | 超时间 |
-| `docs.md` | 术语字典 — 位格的专有词汇表 | 超时间 |
-
----
-
-## 与 Zettelkasten 集成
-
-open-upsp 通过**桥接层**与 Zettelkasten 知识库协作：
-
-| UPSP 概念 | Zettelkasten 映射 |
-|----------|------------------|
-| `STM.md` | FLEETING 笔记 |
-| `LTM.md` | PERMANENT 笔记 |
-| `relation.md` | 双向链接 + 链接类型 |
-| `docs.md` | 标签定义 + 术语表 |
-
-集成方式采用**解耦架构**：open-upsp 不修改 Zettelkasten 核心代码，仅通过数据库查询或 CLI 调用进行通信。
-
----
-
-## 开发
-
-```bash
-# 克隆
-git clone https://github.com/your-org/open-upsp.git
+# Clone the repository
+git clone https://github.com/cx2002302-lang/open-upsp.git
 cd open-upsp
 
-# 安装依赖
+# Install dependencies
 npm install
 
-# 运行测试
+# Run tests
 npm test
 
-# 构建
-npm run build
+# Run the CLI
+npx tsx src/cli.ts init my-persona
+npx tsx src/cli.ts interact my-persona
+```
+
+### 3-Minute Setup
+
+```bash
+# 1. Initialize a persona
+npx tsx src/cli.ts init alice
+# Creates: workhoods/alice/ with 7 template files
+
+# 2. Interact with it
+npx tsx src/cli.ts interact alice
+# Type messages, see state evolve in real-time
+
+# 3. Inspect the persona
+npx tsx src/cli.ts inspect alice
+# View current state, memory, and relations
+```
+
+> 📚 Full deployment guide: [`docs/DEPLOY.md`](docs/DEPLOY.md) | Quick deploy: [`docs/DEPLOY_QUICK.md`](docs/DEPLOY_QUICK.md)
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         AI Provider                              │
+│              (OpenAI, Claude, Local LLM, etc.)                   │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │ AI Context (prompt)
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Context Builder (src/context/)                │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐   │
+│  │  Core   │ │  State  │ │  Memory │ │ Relation│ │  Rules  │   │
+│  │ Identity│ │ Dynamic │ │ (STM/   │ │ Network │ │ & Docs  │   │
+│  │         │ │  Axes   │ │  LTM)   │ │         │ │         │   │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘   │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │ Persona Files
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Persona Substrate (7 Files)                   │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐   │
+│  │core.md  │ │state.md │ │  STM/   │ │relation.│ │rules.md │   │
+│  │         │ │         │ │  LTM/   │ │  md     │ │         │   │
+│  │ Identity│ │ Dynamic │ │ Memory  │ │ Network │ │Behavior │   │
+│  │ Profile │ │  State  │ │  Vault  │ │  Graph  │ │ Rules   │   │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘   │
+│                    + docs.md (Documentation)                     │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │ Optional
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│              Zettelkasten Plugin (Optional Deep Memory)          │
+│         Bidirectional linking · Knowledge graph · Obsidian      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Dual Skill Architecture
+
+open-upsp uses a unique **dual skill** design:
+
+| Skill | Purpose | Mutability |
+|-------|---------|------------|
+| `skill/core/` | Immutable identity — name, version, base personality | 🔒 Read-only |
+| `skill/evolvable/` | Mutable parameters — moods, traits, relationships, limits | ✏️ User-editable |
+
+The evolvable skill activates after **10 interaction rounds** and a **0.3 workhood index**, unlocking advanced parameter customization via [`PARAMS.yaml`](skill/evolvable/PARAMS.yaml).
+
+---
+
+## 🧪 Tests & Quality
+
+<p align="center">
+  <img src="docs/assets/open-upsp-metrics-infographic.jpg" alt="Test Metrics" width="100%">
+</p>
+
+### Test Results (v0.3.0 Beta)
+
+| Metric | Value | Status |
+|--------|-------|--------|
+| Total Tests | **104** | ✅ All Passed |
+| Line Coverage | **94.39%** | ✅ Excellent |
+| Function Coverage | **97.7%** | ✅ Excellent |
+| Branch Coverage | **88.47%** | ✅ Good |
+| Biome Errors | **0** | ✅ Clean |
+| Biome Warnings | **0** | ✅ Clean |
+
+### Stress Test Scenarios (10/10 Passed)
+
+| # | Scenario | Result |
+|---|----------|--------|
+| 1 | Empty Persona Initialization | ✅ PASS |
+| 2 | Light Dialog (3 rounds) | ✅ PASS |
+| 3 | Technical Discussion | ✅ PASS |
+| 4 | Emotional Conversation | ✅ PASS |
+| 5 | Creative Storm | ✅ PASS |
+| 6 | Academic Research | ✅ PASS |
+| 7 | Big Data (50 STM entries) | ✅ PASS — 69ms context build |
+| 8 | 10-Round Evolution | ✅ PASS |
+| 9 | Boundary Testing | ✅ PASS |
+| 10 | Error Recovery | ✅ PASS |
+
+> 🔬 Full test report: `coverage/lcov-report/index.html`
+
+---
+
+## 📦 Release Contents
+
+```
+open-upsp-release/
+├── src/                    # Source code (TypeScript, ESM)
+├── dist/                   # Compiled output
+├── templates/              # Persona initialization templates
+├── skill/                  # Dual skill system (core + evolvable)
+│   ├── core/               # Immutable identity templates
+│   └── evolvable/          # Mutable params (PARAMS.yaml)
+├── scripts/                # Install, deploy, utility scripts
+│   ├── install.sh          # One-line install
+│   ├── uninstall.sh        # Clean removal (preserves ZK)
+│   └── publish.sh          # Release packaging
+├── vendor/                 # Bundled dependencies
+│   └── zettelkasten-plugin/  # Deep memory plugin
+├── docs/                   # Documentation
+│   ├── DEPLOY.md           # Full deployment guide
+│   ├── DEPLOY_QUICK.md     # 3-step quick start
+│   ├── EVOLUTION.md        # Evolution system docs
+│   └── release/            # Release materials
+└── [config files]          # package.json, LICENSE, CHANGELOG...
 ```
 
 ---
 
-## 协议规范
+## 📖 Documentation
 
-open-upsp 基于 UPSP（Universal Persona Substrate Protocol）概念设计，但为工程化落地做了必要简化：
-
-- 七文件格式使用 Markdown + JSON，便于人工编辑和版本控制
-- 核心六轴使用 `-100 ~ +100` 的整数标度
-- 动态六轴使用 `0 ~ 100` 的整数标度
-- 变速轮阈值固定为 256 轮（可配置）
+| Document | Description |
+|----------|-------------|
+| [`docs/DEPLOY.md`](docs/DEPLOY.md) | Full deployment guide with all options |
+| [`docs/DEPLOY_QUICK.md`](docs/DEPLOY_QUICK.md) | 3-step quick deployment |
+| [`docs/EVOLUTION.md`](docs/EVOLUTION.md) | How the evolution system works |
+| [`PUBLISH.md`](PUBLISH.md) | Release checklist for maintainers |
+| [`CHANGELOG.md`](CHANGELOG.md) | Version history |
+| [`docs/release/SHOWCASE.md`](docs/release/SHOWCASE.md) | 10 real CLI demos |
 
 ---
 
-## License
+## 🔗 Related Projects
 
-MIT
+- **[cx2002302-lang/UPSP-Zettelkasten](https://github.com/cx2002302-lang/UPSP-Zettelkasten)** — Zettelkasten deep memory plugin for open-upsp (bundled in `vendor/`)
+- **Obsidian** — Recommended knowledge management tool for Zettelkasten workflow
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+All code must pass tests (`npm test`) and linting (`npx biome check`) before merging.
+
+---
+
+## 📜 License
+
+This project is licensed under the **MIT License** — see [`LICENSE`](LICENSE) for details.
+
+The bundled Zettelkasten plugin is also MIT licensed and maintained separately at [UPSP-Zettelkasten](https://github.com/cx2002302-lang/UPSP-Zettelkasten).
+
+---
+
+## 🙏 Acknowledgments
+
+- Inspired by the concept of "Digital Self" in AI ethics and persona engineering
+- Zettelkasten methodology by Niklas Luhmann
+- Built with TypeScript, Biome, and Vitest
+
+---
+
+<p align="center">
+  <sub>Built with ❤️ for AI-native applications · v0.3.0 Beta</sub><br>
+  <sub>Give your AI a self that persists.</sub>
+</p>
