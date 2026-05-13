@@ -1,0 +1,98 @@
+{
+  "version": "0.3.0",
+  "date": "2026-05-13T03:03:00Z",
+  "environment": {
+    "openclaw": "2026.4.24 (cbcfdf6)",
+    "node": "22.22.2",
+    "zettelkasten_db": "/home/myxia/.openclaw/zettelkasten/zettelkasten.db",
+    "zk_total_notes": 39,
+    "zk_fts_indexed": 29
+  },
+  "test_suite": {
+    "total_tests": 104,
+    "test_files": 17,
+    "passed": 104,
+    "failed": 0,
+    "duration_ms": 2220,
+    "categories": {
+      "unit_tests": 72,
+      "integration_tests": 19,
+      "e2e_tests": 13
+    }
+  },
+  "coverage": {
+    "overall": {
+      "lines": 94.39,
+      "statements": 94.39,
+      "branches": 88.47,
+      "functions": 97.7
+    },
+    "by_module": {
+      "src/utils/file.ts": { "lines": 100, "branches": 100, "functions": 100 },
+      "src/persona/types.ts": { "lines": 100, "branches": 100, "functions": 100 },
+      "src/index.ts": { "lines": 100, "branches": 100, "functions": 100 },
+      "src/context/builder.ts": { "lines": 100, "branches": 100, "functions": 100 },
+      "src/context/distiller.ts": { "lines": 100, "branches": 100, "functions": 100 },
+      "src/context/sync.ts": { "lines": 97.61, "branches": 86.66, "functions": 100 },
+      "src/bridge/cli-bridge.ts": { "lines": 97.7, "branches": 91.3, "functions": 100 },
+      "src/persona/saver.ts": { "lines": 97.53, "branches": 93.33, "functions": 100 },
+      "src/context/state-updater.ts": { "lines": 95.65, "branches": 88.88, "functions": 100 },
+      "src/persona/loader.ts": { "lines": 93.47, "branches": 86.27, "functions": 100 },
+      "src/config.ts": { "lines": 92, "branches": 85.71, "functions": 80 },
+      "src/bridge/sqlite-bridge.ts": { "lines": 85.51, "branches": 72.97, "functions": 95.45 },
+      "src/cli.ts": { "lines": 0, "branches": 100, "functions": 100, "note": "E2E covered, excluded from stats" }
+    }
+  },
+  "prod_test": {
+    "commands_tested": [
+      "init", "init -t <template>", "status", "search", "context",
+      "context -q", "state update", "distill", "config get", "config set",
+      "sync", "session-end"
+    ],
+    "templates_tested": ["default", "developer", "researcher", "creator", "companion"],
+    "zk_write_verification": {
+      "note_id": "20260513110306083",
+      "title": "今天讨论了架构设计，决定用微服务方案。这个很重要，记下来。",
+      "type": "atomic",
+      "status": "FLEETING",
+      "folder": "zettels",
+      "confidence": 1,
+      "source": "distilled",
+      "tags": ["prod-default", "design"],
+      "weight": 5
+    },
+    "persona_state_after_session": {
+      "round": 2,
+      "speedWheel": "low",
+      "workhoodIndex": 0.09,
+      "dynamicAxes": {
+        "valence": 15,
+        "arousal": 20,
+        "focus": 70,
+        "mood": 10,
+        "humor": 30,
+        "safety": 60
+      }
+    },
+    "relation_matrix_after_session": [
+      { "entity": "user", "resonance": 0.51, "type": "human" }
+    ]
+  },
+  "historical": {
+    "v0.1.0": { "tests": 7, "coverage_lines": 45.08 },
+    "v0.2.0": { "tests": 7, "coverage_lines": 45.08 },
+    "v0.3.0": { "tests": 104, "coverage_lines": 94.39 }
+  },
+  "code_quality": {
+    "typescript_errors": 0,
+    "biome_errors": 0,
+    "biome_warnings": 0,
+    "total_source_files": 14,
+    "total_test_files": 17,
+    "lines_of_code": {
+      "src": 1890,
+      "tests": 2339,
+      "total": 4229
+    }
+  }
+}
