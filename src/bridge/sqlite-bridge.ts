@@ -163,7 +163,7 @@ export class SQLiteBridge implements KnowledgeBridge {
              n.created_at, n.updated_at,
              rank AS score
       FROM zettel_notes n
-      JOIN zettel_fts fts ON n.id = fts.rowid
+      JOIN zettel_fts fts ON n.id = fts.id
       WHERE zettel_fts MATCH ?
         AND n.folder != 'archive'
       ORDER BY rank

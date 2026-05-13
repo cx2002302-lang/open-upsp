@@ -12,6 +12,7 @@ describe("SQLiteBridge", () => {
     });
 
     const results = bridge.searchNotes("test", 5);
+    expect(results.length).toBeGreaterThan(0);
     expect(Array.isArray(results)).toBe(true);
 
     bridge.close();
