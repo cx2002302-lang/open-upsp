@@ -19,7 +19,7 @@ open-upsp 实现了一套**位格（Persona）持久化协议**，让 AI 代理�
 ## 核心特性
 
 - **七文件位格结构** — `core.md` + `state.json` + `STM.md` + `LTM.md` + `relation.md` + `rules.md` + `docs.md`
-- **多态位格支持** — 同时维护多个独立位格，按需切换
+- **多态位格支持** — 5 套内置模板（default / professional / emotional / creative / companion），按需切换
 - **知识库桥接** — 与 Zettelkasten 第二记忆系统集成，扩展 LTM（长期记忆）能力
 - **CLI 工具** — 命令行管理位格、查询知识、构建对话上下文
 - **纯本地存储** — 七文件真源不落云端，完全可审计
@@ -38,8 +38,18 @@ open-upsp init
 # 查看位格状态
 open-upsp status
 
+# 从模板初始化（可选模板：professional / emotional / creative / companion）
+open-upsp init -t professional
+
 # 搜索知识库
 open-upsp search "Docker networking"
+
+# 会话收尾（自动蒸馏 + 状态更新 + 同步到 ZK）
+open-upsp session-end --text "今天的对话内容..."
+
+# 配置管理
+open-upsp config get defaultPersona
+open-upsp config set zettelkasten.enabled --value false
 
 # 构建完整上下文（位格 + 知识库）
 open-upsp context

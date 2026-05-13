@@ -62,6 +62,20 @@ export class CliBridge {
     const source = params.source ?? "manual";
     args.push(`--source`, source);
 
+    // 嵌入 UPSP 元数据到内容中
+    const meta: Record<string, unknown> = {};
+    if (params.resonance !== undefined) meta.resonance = params.resonance;
+    if (params.relationType) meta.relationType = params.relationType;
+    let content = params.content;
+    if (Object.keys(meta).length > 0) {
+      content += `\n\n<!-- UPSP-META: ${JSON.stringify(meta)} -->`;
+    }
+    // 更新 args 中的 content
+    const contentIdx = args.indexOf(`--content`);
+    if (contentIdx !== -1 && contentIdx + 1 < args.length) {
+      args[contentIdx + 1] = this.escapeShellArg(content);
+    }
+
     const command = `${this.options.cliPath} ${args.join(" ")}`;
 
     try {

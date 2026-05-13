@@ -1,0 +1,17 @@
+{
+  "personaId": "default",
+  "round": 0,
+  "speedWheel": "low",
+  "workhoodIndex": 0.0,
+  "dynamicAxes": {
+    "valence": 0,
+    "arousal": 20,
+    "focus": 70,
+    "mood": 40,
+    "humor": 30,
+    "safety": 60
+  },
+  "lastUpdated": "2026-05-12T00:00:00Z",
+  "sessionCount": 0,
+  "rhythmPoints": []
+}

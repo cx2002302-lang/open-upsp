@@ -18,6 +18,11 @@ export type ZettelLinkType =
   | "has_example"
   | "related";
 
+export interface UpsMeta {
+  resonance?: number;
+  relationType?: string;
+}
+
 export interface ZettelNote {
   id: string;
   title: string;
@@ -35,6 +40,7 @@ export interface ZettelNote {
   updatedAt: string;
   tags: string[];
   links: ZettelLink[];
+  upsMeta?: UpsMeta;
 }
 
 export interface ZettelLink {
@@ -69,11 +75,15 @@ export interface CreateNoteParams {
   tags?: string[];
   confidence?: number;
   source?: "manual" | "distilled" | "ceqrc";
+  /** UPSP 关系共振度（0-1），写入时会嵌入笔记内容 */
+  resonance?: number;
+  /** UPSP 关系类型 */
+  relationType?: string;
 }
 
 // KnowledgeBridge 抽象接口
 export interface KnowledgeBridge {
-  searchNotes(query: string, limit?: number): SearchResult[];
+  searchNotes(query: string, limit?: number, resonanceMap?: Map<string, number>): SearchResult[];
   getNote(id: string): ZettelNote | null;
   getBacklinks(noteId: string): ZettelLink[];
   findPath(from: string, to: string): GraphPath | null;

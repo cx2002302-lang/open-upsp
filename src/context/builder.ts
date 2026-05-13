@@ -12,6 +12,7 @@ export class ContextBuilder {
 
   build(persona: Persona, options: BuildContextOptions = {}): string {
     const parts: string[] = [];
+    const resonanceMap = this.buildResonanceMap(persona);
 
     parts.push(this.buildIdentity(persona));
     parts.push(this.buildState(persona));
@@ -25,10 +26,18 @@ export class ContextBuilder {
     }
 
     if (options.query) {
-      parts.push(this.buildKnowledge(options.query));
+      parts.push(this.buildKnowledge(options.query, resonanceMap));
     }
 
     return parts.filter(Boolean).join("\n\n---\n\n");
+  }
+
+  private buildResonanceMap(persona: Persona): Map<string, number> {
+    const map = new Map<string, number>();
+    for (const entry of persona.relation.entries) {
+      map.set(entry.entity, entry.resonance);
+    }
+    return map;
   }
 
   private buildIdentity(persona: Persona): string {
@@ -123,9 +132,9 @@ export class ContextBuilder {
     return lines.join("\n");
   }
 
-  private buildKnowledge(query: string): string {
+  private buildKnowledge(query: string, resonanceMap: Map<string, number>): string {
     try {
-      const results = this.bridge.searchNotes(query, 10);
+      const results = this.bridge.searchNotes(query, 10, resonanceMap);
 
       if (results.length === 0) {
         return `# 知识库检索: "${query}"\n\n未找到相关笔记。`;

@@ -10,6 +10,7 @@ export interface DistillResult {
     humor?: number;
     safety?: number;
   };
+  relationDelta: Map<string, number>; // entity -> resonance delta
 }
 
 /**
@@ -19,7 +20,7 @@ export interface DistillResult {
  * Phase 3 可升级为 LLM 驱动的深度蒸馏。
  */
 export class SessionDistiller {
-  distill(sessionText: string): DistillResult {
+  distill(sessionText: string, knownEntities?: string[]): DistillResult {
     const lines = sessionText.split("\n").filter((l) => l.trim());
     const entries: MemoryEntry[] = [];
     let stateDelta: DistillResult["stateDelta"] = {};
@@ -32,8 +33,9 @@ export class SessionDistiller {
     }
 
     stateDelta = this.inferStateDelta(sessionText);
+    const relationDelta = this.inferRelationDelta(sessionText, knownEntities);
 
-    return { entries, stateDelta };
+    return { entries, stateDelta, relationDelta };
   }
 
   private extractEntry(line: string): MemoryEntry | null {
@@ -138,6 +140,27 @@ export class SessionDistiller {
     }
     if (lower.includes("担心") || lower.includes("害怕") || lower.includes("不确定")) {
       delta.safety = -3;
+    }
+
+    return delta;
+  }
+
+  private inferRelationDelta(text: string, knownEntities?: string[]): Map<string, number> {
+    const delta = new Map<string, number>();
+    if (!knownEntities || knownEntities.length === 0) return delta;
+
+    const lower = text.toLowerCase();
+
+    for (const entity of knownEntities) {
+      const entityLower = entity.toLowerCase();
+      const count = (lower.match(new RegExp(entityLower, "g")) ?? []).length;
+      if (count > 0) {
+        // 每次提及增加 0.01，上限由调用方控制
+        delta.set(entity, Math.min(count * 0.01, 0.05));
+      } else {
+        // 未提及则轻微衰减
+        delta.set(entity, -0.005);
+      }
     }
 
     return delta;

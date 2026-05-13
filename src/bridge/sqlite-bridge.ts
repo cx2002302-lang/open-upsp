@@ -138,18 +138,22 @@ export class SQLiteBridge implements KnowledgeBridge {
   // 只读查询方法
   // =========================================================================
 
-  searchNotes(query: string, limit = 20): SearchResult[] {
+  searchNotes(query: string, limit = 20, resonanceMap?: Map<string, number>): SearchResult[] {
     const db = this.connect();
 
     // 使用 FTS5 全文搜索（如果可用）
     const hasFts = this.hasTable(db, "zettel_fts");
 
-    if (hasFts) {
-      return this.searchWithFts(db, query, limit);
+    const results = hasFts
+      ? this.searchWithFts(db, query, limit)
+      : this.searchWithLike(db, query, limit);
+
+    // 关系感知排序：根据 resonanceMap 调整分数
+    if (resonanceMap && resonanceMap.size > 0) {
+      return this.applyResonanceBoost(results, resonanceMap);
     }
 
-    // 降级：LIKE 搜索
-    return this.searchWithLike(db, query, limit);
+    return results;
   }
 
   private searchWithFts(db: Database.Database, query: string, limit: number): SearchResult[] {
@@ -229,6 +233,7 @@ export class SQLiteBridge implements KnowledgeBridge {
     const queue: Array<{ id: string; path: string[] }> = [{ id: from, path: [from] }];
 
     while (queue.length > 0) {
+      // biome-ignore lint/style/noNonNullAssertion: queue.length > 0 guarantees non-null
       const current = queue.shift()!;
 
       if (current.id === to) {
@@ -333,10 +338,12 @@ export class SQLiteBridge implements KnowledgeBridge {
     `);
     const linkRows = linksStmt.all(id) as Array<Record<string, unknown>>;
 
+    const content = String(row.content);
+
     return {
       id,
       title: String(row.title),
-      content: String(row.content),
+      content,
       summary: row.summary ? String(row.summary) : null,
       type: String(row.type) as ZettelNote["type"],
       status: String(row.status) as ZettelNote["status"],
@@ -350,6 +357,7 @@ export class SQLiteBridge implements KnowledgeBridge {
       updatedAt: String(row.updated_at),
       tags: tagRows.map((t) => t.name),
       links: linkRows.map((r) => this.toLink(r)),
+      upsMeta: this.extractUpsMeta(content),
     };
   }
 
@@ -364,6 +372,48 @@ export class SQLiteBridge implements KnowledgeBridge {
       score: row.score ? Number(row.score) : 1.0,
       snippet: snippet.length > note.content.length ? null : snippet,
     };
+  }
+
+  private applyResonanceBoost(
+    results: SearchResult[],
+    resonanceMap: Map<string, number>,
+  ): SearchResult[] {
+    return results
+      .map((result) => {
+        const note = result.note;
+        let boost = 0;
+
+        for (const [entity, resonance] of resonanceMap) {
+          const entityLower = entity.toLowerCase();
+          const text = `${note.title} ${note.content} ${note.tags.join(" ")}`.toLowerCase();
+
+          if (text.includes(entityLower)) {
+            boost += resonance * 0.2; // 最大提升 0.2 * 1.0 = 0.2
+          }
+        }
+
+        return {
+          ...result,
+          score: result.score + boost,
+        };
+      })
+      .sort((a, b) => b.score - a.score);
+  }
+
+  private extractUpsMeta(
+    content: string,
+  ): { resonance?: number; relationType?: string } | undefined {
+    const match = content.match(/<!--\s*UPSP-META:\s*(.+?)\s*-->/);
+    if (!match) return undefined;
+    try {
+      const parsed = JSON.parse(match[1]) as Record<string, unknown>;
+      const meta: { resonance?: number; relationType?: string } = {};
+      if (typeof parsed.resonance === "number") meta.resonance = parsed.resonance;
+      if (typeof parsed.relationType === "string") meta.relationType = parsed.relationType;
+      return Object.keys(meta).length > 0 ? meta : undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   private toLink(row: Record<string, unknown>): ZettelLink {

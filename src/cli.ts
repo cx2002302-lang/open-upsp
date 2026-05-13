@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { program } from "commander";
 import { SQLiteBridge } from "./bridge/sqlite-bridge.js";
 
-import { getConfig, getPersonasDir, resolvePath } from "./config.js";
+import { getConfig, getPersonasDir, resolvePath, saveConfig } from "./config.js";
 import { ContextBuilder } from "./context/builder.js";
 import { SessionDistiller } from "./context/distiller.js";
 import { StateUpdater } from "./context/state-updater.js";
@@ -31,6 +31,11 @@ program
   .command("init")
   .description("Initialize a new persona")
   .option("-p, --persona <id>", "Persona ID", "default")
+  .option(
+    "-t, --template <name>",
+    "Template name (default/developer/researcher/creator/companion)",
+    "default",
+  )
   .option("-d, --dir <path>", "Custom personas directory")
   .action((options) => {
     try {
@@ -42,7 +47,14 @@ program
         process.exit(1);
       }
 
-      const templateDir = join(__dirname, "..", "templates", "default");
+      const templateDir = join(__dirname, "..", "templates", options.template);
+      if (!existsSync(templateDir)) {
+        console.error(
+          `Error: Template "${options.template}" not found. Available: default, developer, researcher, creator, companion`,
+        );
+        process.exit(1);
+      }
+
       copyDir(templateDir, personaDir);
 
       const statePath = join(personaDir, "state.json");
@@ -50,7 +62,9 @@ program
       state.personaId = options.persona;
       writeFileSync(statePath, JSON.stringify(state, null, 2));
 
-      console.log(`Created persona "${options.persona}" at ${personaDir}`);
+      console.log(
+        `Created persona "${options.persona}" from template "${options.template}" at ${personaDir}`,
+      );
     } catch (err) {
       console.error("Error:", err instanceof Error ? err.message : String(err));
       process.exit(1);
@@ -422,11 +436,31 @@ program
 
       // 1. 蒸馏
       const distiller = new SessionDistiller();
-      const distillResult = distiller.distill(sessionText);
+      const knownEntities = persona.relation.entries.map((e) => e.entity);
+      const distillResult = distiller.distill(sessionText, knownEntities);
 
       console.log(`Distilled ${distillResult.entries.length} entries`);
       for (const entry of distillResult.entries) {
         persona.stm.entries.push(entry);
+      }
+
+      // 1.5 更新关系矩阵
+      if (distillResult.relationDelta.size > 0) {
+        for (const [entity, delta] of distillResult.relationDelta) {
+          const existing = persona.relation.entries.find((e) => e.entity === entity);
+          if (existing) {
+            existing.resonance = Math.max(0, Math.min(1, existing.resonance + delta));
+          } else if (delta > 0) {
+            // 新实体，只有正向 delta 才创建
+            persona.relation.entries.push({
+              entity,
+              resonance: Math.min(0.1, delta),
+              type: "concept",
+              description: `Auto-detected from session`,
+            });
+          }
+        }
+        console.log(`Relation matrix updated (${distillResult.relationDelta.size} entities)`);
       }
 
       // 2. 更新状态
@@ -463,12 +497,92 @@ program
   });
 
 // ============================================================================
+// config — 配置管理
+// ============================================================================
+
+program
+  .command("config")
+  .description("Manage configuration")
+  .option("-g, --get <key>", "Get config value")
+  .option("-s, --set <key>", "Set config value")
+  .option("-v, --value <val>", "Value to set (used with --set)")
+  .action((options) => {
+    try {
+      const config = getConfig();
+
+      if (options.get) {
+        const key = options.get as string;
+        const value = getNestedValue(config, key);
+        console.log(value ?? "(undefined)");
+        return;
+      }
+
+      if (options.set) {
+        if (options.value === undefined) {
+          console.error("Error: --value required with --set");
+          process.exit(1);
+        }
+        const key = options.set as string;
+        const value = parseValue(options.value as string);
+        setNestedValue(config, key, value);
+        saveConfig(config);
+        console.log(`Set ${key} = ${JSON.stringify(value)}`);
+        return;
+      }
+
+      // 无参数时显示全部配置
+      console.log(JSON.stringify(config, null, 2));
+    } catch (err) {
+      console.error("Error:", err instanceof Error ? err.message : String(err));
+      process.exit(1);
+    }
+  });
+
+// ============================================================================
 // 辅助函数
 // ============================================================================
 
 function copyDir(src: string, dest: string): void {
   ensureDir(dest);
   cpSync(src, dest, { recursive: true });
+}
+
+function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
+  const parts = path.split(".");
+  let current: unknown = obj;
+  for (const part of parts) {
+    if (current === null || current === undefined || typeof current !== "object") return undefined;
+    current = (current as Record<string, unknown>)[part];
+  }
+  return current;
+}
+
+function setNestedValue(obj: Record<string, unknown>, path: string, value: unknown): void {
+  const parts = path.split(".");
+  let current: Record<string, unknown> = obj;
+  for (let i = 0; i < parts.length - 1; i++) {
+    const part = parts[i];
+    if (!(part in current) || typeof current[part] !== "object" || current[part] === null) {
+      current[part] = {};
+    }
+    current = current[part] as Record<string, unknown>;
+  }
+  current[parts[parts.length - 1]] = value;
+}
+
+function parseValue(val: string): unknown {
+  if (val === "true") return true;
+  if (val === "false") return false;
+  if (val === "null") return null;
+  if (val === "undefined") return undefined;
+  const num = Number(val);
+  if (!Number.isNaN(num) && val !== "" && val !== " ") return num;
+  try {
+    return JSON.parse(val);
+  } catch {
+    /* ignore */
+  }
+  return val;
 }
 
 // ============================================================================
