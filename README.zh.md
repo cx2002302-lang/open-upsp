@@ -14,7 +14,7 @@
     <img src="https://img.shields.io/github/v/release/cx2002302-lang/open-upsp?style=flat-square&color=blue" alt="Release">
   </a>
   <a href="#测试">
-    <img src="https://img.shields.io/badge/测试-104%20通过-brightgreen?style=flat-square" alt="Tests">
+    <img src="https://img.shields.io/badge/测试-199%20通过-brightgreen?style=flat-square" alt="Tests">
   </a>
   <a href="#测试">
     <img src="https://img.shields.io/badge/覆盖率-94.39%25-brightgreen?style=flat-square" alt="Coverage">
@@ -52,7 +52,7 @@
 | 🔌 **Zettelkasten 插件** | 可选的深度记忆系统，支持 Obsidian 风格的双向链接 |
 | 📈 **运行时可演化** | 10 轮交互 + 0.3 工作指数后解锁高级参数 |
 | ⚡ **高性能** | 即使有 50 条 STM 记录，上下文构建 < 70ms |
-| 🧪 **久经考验** | 104 项测试、94.39% 覆盖率、10/10 压力场景全部通过 |
+| 🧪 **久经考验** | 199 项测试、94.39% 覆盖率、10/10 压力场景全部通过 |
 
 ---
 
@@ -150,7 +150,7 @@ open-upsp 采用独特的**双技能**设计：
 
 | 指标 | 数值 | 状态 |
 |------|------|------|
-| 总测试数 | **104** | ✅ 全部通过 |
+| 总测试数 | **199** | ✅ 全部通过 |
 | 行覆盖率 | **94.39%** | ✅ 优秀 |
 | 函数覆盖率 | **97.7%** | ✅ 优秀 |
 | 分支覆盖率 | **88.47%** | ✅ 良好 |

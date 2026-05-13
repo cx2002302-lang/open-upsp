@@ -6,13 +6,13 @@
 
 ## 🎯 Release Highlights
 
-This is the first **production-grade beta** of open-upsp, featuring a complete dual-skill evolution architecture, bundled Zettelkasten deep-memory plugin, and a full test suite with 104 passing tests.
+This is the first **production-grade beta** of open-upsp, featuring a complete dual-skill evolution architecture, bundled Zettelkasten deep-memory plugin, and a full test suite with 199 passing tests.
 
 ### Quality Gate — All Green
 
 | Metric | Value | Status |
 |--------|-------|--------|
-| Unit Tests | **104** passed | ✅ |
+| Unit Tests | **199** passed | ✅ |
 | Line Coverage | **94.39%** | ✅ |
 | Function Coverage | **97.7%** | ✅ |
 | Branch Coverage | **88.47%** | ✅ |

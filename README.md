@@ -14,7 +14,7 @@
     <img src="https://img.shields.io/github/v/release/cx2002302-lang/open-upsp?style=flat-square&color=blue" alt="Release">
   </a>
   <a href="#tests">
-    <img src="https://img.shields.io/badge/tests-104%20passed-brightgreen?style=flat-square" alt="Tests">
+    <img src="https://img.shields.io/badge/tests-199%20passed-brightgreen?style=flat-square" alt="Tests">
   </a>
   <a href="#tests">
     <img src="https://img.shields.io/badge/coverage-94.39%25-brightgreen?style=flat-square" alt="Coverage">
@@ -52,7 +52,7 @@ Instead of losing context every time a conversation ends, open-upsp maintains a 
 | 🔌 **Zettelkasten Plugin** | Optional deep memory with Obsidian-style bidirectional linking |
 | 📈 **Runtime Evolvable** | Unlock advanced parameters after 10 rounds + 0.3 workhood index |
 | ⚡ **Fast** | Context build in < 70ms even with 50 STM entries |
-| 🧪 **Battle-Tested** | 104 tests, 94.39% coverage, 10/10 stress scenarios passed |
+| 🧪 **Battle-Tested** | 199 tests, 94.39% coverage, 10/10 stress scenarios passed |
 
 ---
 
@@ -154,7 +154,7 @@ The evolvable skill activates after **10 interaction rounds** and a **0.3 workho
 
 | Metric | Value | Status |
 |--------|-------|--------|
-| Total Tests | **104** | ✅ All Passed |
+| Total Tests | **199** | ✅ All Passed |
 | Line Coverage | **94.39%** | ✅ Excellent |
 | Function Coverage | **97.7%** | ✅ Excellent |
 | Branch Coverage | **88.47%** | ✅ Good |
