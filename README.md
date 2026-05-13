@@ -14,13 +14,14 @@
     <img src="https://img.shields.io/github/v/release/cx2002302-lang/open-upsp?style=flat-square&color=blue" alt="Release">
   </a>
   <a href="#tests">
-    <img src="https://img.shields.io/badge/tests-199%20passed-brightgreen?style=flat-square" alt="Tests">
+    <img src="https://img.shields.io/badge/tests-207%20passed-brightgreen?style=flat-square" alt="Tests">
   </a>
   <a href="#tests">
     <img src="https://img.shields.io/badge/coverage-94.39%25-brightgreen?style=flat-square" alt="Coverage">
   </a>
   <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License">
-  <img src="https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen?style=flat-square" alt="Node.js">
+  <img src="https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen?style=flat-square" alt="Node.js">
+  <img src="https://img.shields.io/badge/OpenClaw-%3E%3D2026.4.24-lightgrey?style=flat-square" alt="OpenClaw">
 </p>
 
 <p align="center">
@@ -60,10 +61,14 @@ Instead of losing context every time a conversation ends, open-upsp maintains a 
 
 | Component | Version | Required For |
 |-----------|---------|-------------|
-| Node.js | >= 22 | Core CLI |
-| OpenClaw | >= 2026.4.24 | Agent Skill integration (optional) |
+| Node.js | >= 22 | Core CLI (required) |
+| OpenClaw | **>= 2026.4.24** | Agent Skill + ZK deep memory (optional) |
 
-> OpenClaw is **optional** — open-upsp CLI works standalone without it. However, the Zettelkasten deep-memory plugin and Agent Skill integration require OpenClaw >= 2026.4.24.
+> ⚠️ **Developed & tested on OpenClaw v2026.4.24**
+>
+> The Zettelkasten deep-memory plugin and Agent Skill integration rely on APIs introduced in OpenClaw v2026.4.24. Earlier versions will be rejected at install time.
+>
+> **OpenClaw is optional** — open-upsp CLI works standalone without it. If you only need the CLI and file-based persona management, no OpenClaw installation is required.
 
 ---
 
