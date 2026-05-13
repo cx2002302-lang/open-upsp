@@ -160,7 +160,7 @@ The evolvable skill activates after **10 interaction rounds** and a **0.3 workho
 
 ---
 
-## 🧪 Tests & Quality
+## 🧪 Tests
 
 <p align="center">
   <img src="docs/assets/open-upsp-metrics-infographic.jpg" alt="Test Metrics" width="100%">
