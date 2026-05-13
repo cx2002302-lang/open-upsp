@@ -30,3 +30,9 @@ open-upsp-release/
 
 # Internal docs (not for publish)
 ZK_OPTIMIZATION_SUGGESTIONS.md
+
+# Internal planning docs
+BRIEFING.md
+GOALS.md
+METHODOLOGY.md
+TEST_PLAN.md
