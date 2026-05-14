@@ -146,21 +146,11 @@ function configureOpenClaw() {
   if (!Array.isArray(data.agents.defaults.skills)) {
     data.agents.defaults.skills = [];
   }
-  if (!data.tools) data.tools = {};
-  if (!Array.isArray(data.tools.alsoAllow)) {
-    data.tools.alsoAllow = [];
-  }
-
-  // 去重追加
+  // 去重追加 skill
   let modified = false;
   if (!data.agents.defaults.skills.includes(SKILL_ID)) {
     data.agents.defaults.skills.push(SKILL_ID);
     log("info", `已添加 ${SKILL_ID} 到 agents.defaults.skills`);
-    modified = true;
-  }
-  if (!data.tools.alsoAllow.includes(SKILL_ID)) {
-    data.tools.alsoAllow.push(SKILL_ID);
-    log("info", `已添加 ${SKILL_ID} 到 tools.alsoAllow`);
     modified = true;
   }
 
@@ -192,8 +182,7 @@ function verify() {
     try {
       const data = JSON.parse(fs.readFileSync(OPENCLAW_CONFIG, "utf8"));
       const hasSkill = data.agents?.defaults?.skills?.includes(SKILL_ID);
-      const hasAllow = data.tools?.alsoAllow?.includes(SKILL_ID);
-      if (hasSkill && hasAllow) {
+      if (hasSkill) {
         log("ok", "OpenClaw skill 已激活");
       } else {
         log("warn", "OpenClaw skill 可能未正确激活");

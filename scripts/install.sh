@@ -230,8 +230,7 @@ verify_installation() {
     if node -e "
       const d = require('$OPENCLAW_CONFIG');
       const hasSkill = d.agents?.defaults?.skills?.includes('open-upsp');
-      const hasAllow = d.tools?.alsoAllow?.includes('open-upsp');
-      process.exit(hasSkill && hasAllow ? 0 : 1);
+      process.exit(hasSkill ? 0 : 1);
     " 2>/dev/null; then
       log_ok "OpenClaw: skill 已激活 ✓"
     else
