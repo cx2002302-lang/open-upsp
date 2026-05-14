@@ -233,7 +233,7 @@ open-upsp-release/
 
 ## 🔗 相关项目
 
-- **[cx2002302-lang/UPSP-Zettelkasten](https://github.com/cx2002302-lang/UPSP-Zettelkasten)** —— open-upsp 的 Zettelkasten 深度记忆插件（已捆绑在 `vendor/` 中）
+- **[cx2002302-lang/zettelkasten-second-memory](https://github.com/cx2002302-lang/zettelkasten-second-memory)** —— open-upsp 的 Zettelkasten 深度记忆插件（已捆绑在 `vendor/` 中）
 - **Obsidian** —— 推荐的 Zettelkasten 工作流知识管理工具
 
 ---
@@ -256,7 +256,7 @@ open-upsp-release/
 
 本项目采用 **MIT 许可证** —— 详见 [`LICENSE`](LICENSE)。
 
-捆绑的 Zettelkasten 插件同样采用 MIT 许可证，在 [UPSP-Zettelkasten](https://github.com/cx2002302-lang/UPSP-Zettelkasten) 单独维护。
+捆绑的 Zettelkasten 插件同样采用 MIT 许可证，在 [zettelkasten-second-memory](https://github.com/cx2002302-lang/zettelkasten-second-memory) 单独维护。
 
 ---
 

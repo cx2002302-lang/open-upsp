@@ -237,7 +237,7 @@ open-upsp-release/
 
 ## 🔗 Related Projects
 
-- **[cx2002302-lang/UPSP-Zettelkasten](https://github.com/cx2002302-lang/UPSP-Zettelkasten)** — Zettelkasten deep memory plugin for open-upsp (bundled in `vendor/`)
+- **[cx2002302-lang/zettelkasten-second-memory](https://github.com/cx2002302-lang/zettelkasten-second-memory)** — Zettelkasten deep memory plugin for open-upsp (bundled in `vendor/`)
 - **Obsidian** — Recommended knowledge management tool for Zettelkasten workflow
 
 ---
@@ -260,7 +260,7 @@ All code must pass tests (`npm test`) and linting (`npx biome check`) before mer
 
 This project is licensed under the **MIT License** — see [`LICENSE`](LICENSE) for details.
 
-The bundled Zettelkasten plugin is also MIT licensed and maintained separately at [UPSP-Zettelkasten](https://github.com/cx2002302-lang/UPSP-Zettelkasten).
+The bundled Zettelkasten plugin is also MIT licensed and maintained separately at [zettelkasten-second-memory](https://github.com/cx2002302-lang/zettelkasten-second-memory).
 
 ---
 
