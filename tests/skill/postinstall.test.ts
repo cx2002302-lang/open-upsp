@@ -41,7 +41,7 @@ describe("Postinstall Script", () => {
     mkdirSync(coreDir, { recursive: true });
     mkdirSync(evolvableDir, { recursive: true });
 
-    writeFileSync(join(skillDir, "manifest.json"), JSON.stringify({ version: "0.3.1", id: "open-upsp" }));
+    writeFileSync(join(skillDir, "manifest.json"), JSON.stringify({ version: "0.3.2", id: "open-upsp" }));
     writeFileSync(join(coreDir, "SKILL.md"), "# open-upsp Skill\n\nTest skill file.");
     writeFileSync(join(coreDir, "PROMPT.md"), "# Prompt\n\nTest prompt.");
     writeFileSync(join(coreDir, "RULES.md"), "# Rules\n\nTest rules.");

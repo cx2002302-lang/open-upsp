@@ -18,7 +18,7 @@ describe("EvolutionLoader", () => {
     writeFileSync(
       join(evolvableDir, "PARAMS.yaml"),
       extra?.params ??
-        `version: "0.3.1"
+        `version: "0.3.2"
 limits:
   state_update:
     delta_max: 7
@@ -50,7 +50,7 @@ behavior:
       join(skillDir, "manifest.json"),
       extra?.manifest ??
         JSON.stringify({
-          version: "0.3.1",
+          version: "0.3.2",
           id: "open-upsp",
           evolvable: {
             path: "evolvable",
@@ -85,7 +85,7 @@ behavior:
       setupSkillDir();
       const params = loader.loadParams();
 
-      expect(params.version).toBe("0.3.1");
+      expect(params.version).toBe("0.3.2");
       expect(params.limits.stateUpdate.deltaMax).toBe(7);
       expect(params.limits.stateUpdate.valenceRange).toEqual([-100, 100]);
       expect(params.limits.relationUpdate.resonanceDeltaMax).toBe(0.08);
@@ -110,7 +110,7 @@ behavior:
 
     it("should handle YAML with comments", () => {
       setupSkillDir({
-        params: `version: "0.3.1"
+        params: `version: "0.3.2"
 limits:
   state_update:
     delta_max: 10 # this is a comment
@@ -184,7 +184,7 @@ behavior:
 
       // Modify file
       const paramsPath = join(tempDir, ".openclaw", "skills", "open-upsp", "evolvable", "PARAMS.yaml");
-      const newContent = `version: "0.3.1"
+      const newContent = `version: "0.3.2"
 limits:
   state_update:
     delta_max: 99
@@ -213,7 +213,7 @@ behavior:
       writeFileSync(paramsPath, newContent);
 
       const p2 = loader.loadParams();
-      expect(p2.version).toBe("0.3.1");
+      expect(p2.version).toBe("0.3.2");
       expect(p2.limits.stateUpdate.deltaMax).toBe(99);
     });
 
@@ -277,7 +277,7 @@ behavior:
     it("should return false when manifest has no unlockCondition", () => {
       setupSkillDir({
         manifest: JSON.stringify({
-          version: "0.3.1",
+          version: "0.3.2",
           // No evolvable.unlockCondition
         }),
       });
