@@ -40,3 +40,4 @@ TEST_PLAN.md
 # Release packages (generated, not source)
 /open-upsp-*.tar.gz
 /open-upsp-*.zip
+templates/

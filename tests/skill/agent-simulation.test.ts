@@ -212,13 +212,13 @@ describe("Agent Real-World Simulation", () => {
     writeFileSync(
       join(skillDir, "manifest.json"),
       JSON.stringify({
-        version: "0.3.0",
+        version: "0.3.1",
         evolvable: { unlockCondition: { round: 10, workhoodIndex: 0.3 } },
       }),
     );
     writeFileSync(
       join(evolvableDir, "PARAMS.yaml"),
-      `version: "0.3.0"
+      `version: "0.3.1"
 limits:
   state_update:
     delta_max: 5

@@ -75,13 +75,13 @@ describe("Session-End Workflow E2E", () => {
     writeFileSync(
       join(skillDir, "manifest.json"),
       JSON.stringify({
-        version: "0.3.0",
+        version: "0.3.1",
         evolvable: { unlockCondition: { round: 10, workhoodIndex: 0.3 } },
       }),
     );
     writeFileSync(
       join(evolvableDir, "PARAMS.yaml"),
-      `version: "0.3.0"
+      `version: "0.3.1"
 limits:
   state_update:
     delta_max: 5
@@ -319,7 +319,7 @@ user: 太棒了！部署非常顺利，感谢！`;
       const evolvableDir = join(skillDir, "evolvable");
       writeFileSync(
         join(evolvableDir, "PARAMS.yaml"),
-        `version: "0.3.0"
+        `version: "0.3.1"
 limits:
   state_update:
     delta_max: 3

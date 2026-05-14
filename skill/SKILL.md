@@ -1,7 +1,7 @@
 ---
 name: open-upsp
 description: Zettelkasten knowledge graph with progressive persona evolution for OpenClaw Agent
-version: "0.3.0"
+version: "0.3.1"
 ---
 
 # open-upsp Persona Skill
@@ -27,4 +27,4 @@ version: "0.3.0"
 
 ---
 
-*版本: 0.3.0 | 双 Skill 架构 | 核心不可变 + 进化可编辑*
+*版本: 0.3.1 | 双 Skill 架构 | 核心不可变 + 进化可编辑*
