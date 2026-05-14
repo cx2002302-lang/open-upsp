@@ -266,7 +266,8 @@ The bundled Zettelkasten plugin is also MIT licensed and maintained separately a
 
 ## 🙏 Acknowledgments
 
-- Inspired by the concept of "Digital Self" in AI ethics and persona engineering
+- **Inspiration**: This project is deeply inspired by **[TzPzFMZ/UPSP](https://github.com/TzPzFMZ/UPSP)** — the original Universal Persona Substrate Protocol that pioneered the concept of persistent AI identity through structured file-based personas.
+- The concept of "Digital Self" in AI ethics and persona engineering
 - Zettelkasten methodology by Niklas Luhmann
 - Built with TypeScript, Biome, and Vitest
 

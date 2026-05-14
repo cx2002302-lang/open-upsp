@@ -262,6 +262,7 @@ open-upsp-release/
 
 ## 🙏 致谢
 
+- **灵感来源**：本项目深受 **[TzPzFMZ/UPSP](https://github.com/TzPzFMZ/UPSP)** 启发 —— 这是最早的通用位格基质协议（Universal Persona Substrate Protocol），开创了通过结构化文件位格实现 AI 持久身份的先河。
 - 灵感源自 AI 伦理和位格工程中的"数字自我"概念
 - Niklas Luhmann 的 Zettelkasten 方法论
 - 使用 TypeScript、Biome 和 Vitest 构建
