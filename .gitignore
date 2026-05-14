@@ -41,3 +41,12 @@ TEST_PLAN.md
 /open-upsp-*.tar.gz
 /open-upsp-*.zip
 templates/
+
+# Internal promotion materials (not for public release)
+docs/release/CHINESE_PROMO.md
+docs/release/JUEJIN_ARTICLE.md
+docs/release/JUEJIN_TWEET.md
+docs/release/REDDIT_GUIDE.md
+docs/release/SHOW_HN.md
+docs/release/SHOWCASE.md
+docs/release/INDEX.md
