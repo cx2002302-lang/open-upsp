@@ -28,7 +28,7 @@ describe("Skill Files Validation", () => {
 
     it("should contain skill ID and version", () => {
       expect(content).toContain("open-upsp");
-      expect(content).toContain("0.3.2");
+      expect(content).toContain("0.3.3");
     });
 
     it("should document dual-skill architecture", () => {

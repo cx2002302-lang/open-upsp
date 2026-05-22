@@ -1,6 +1,6 @@
 # open-upsp 行为规则（核心）
 
-> **版本**: 0.3.2  
+> **版本**: 0.3.3  
 > **状态**: 🔒 不可变 — 本文件为声明性规则，实际执行阈值由 `../evolvable/PARAMS.yaml` 控制  
 > **进化**: 当 Round >= 10 且 workhoodIndex >= 0.3 时，进化模块解锁
 
@@ -163,4 +163,4 @@ sync_weight_threshold: 3     # 同步到 ZK 的权重阈值
 
 ---
 
-*规则版本: 0.3.2 | 核心规则不可变 | 进化参数由 evolvable/PARAMS.yaml 控制*
+*规则版本: 0.3.3 | 核心规则不可变 | 进化参数由 evolvable/PARAMS.yaml 控制*
