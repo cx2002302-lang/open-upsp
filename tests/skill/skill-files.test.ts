@@ -45,7 +45,7 @@ describe("Skill Files Validation", () => {
 
     it("should reference ZK plugin version", () => {
       expect(content).toContain("zettelkasten");
-      expect(content).toContain("v1.0.0-beta.4");
+      expect(content).toContain("v1.0.0-beta.7");
     });
 
     it("should have install and troubleshoot sections", () => {
