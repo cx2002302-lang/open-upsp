@@ -88,7 +88,7 @@ skill/
 ## 依赖
 
 - `open-upsp` CLI 工具（v0.3.0+）
-- `zettelkasten` 插件（v1.0.0-beta.4+，随 open-upsp 自动安装）
+- `zettelkasten` 插件（v1.0.0-beta.7+，随 open-upsp 自动安装）
 
 ---
 

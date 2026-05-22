@@ -23,7 +23,7 @@ version: "0.3.2"
 ## 依赖
 
 - OpenClaw ≥ 2026.4.24
-- Zettelkasten Plugin ≥ 1.0.0-beta.4
+- Zettelkasten Plugin ≥ 1.0.0-beta.7
 
 ---
 
