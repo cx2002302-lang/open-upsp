@@ -1,7 +1,7 @@
 # open-upsp Skill
 
 **ID**: `open-upsp`  
-**Version**: 0.3.0  
+**Version**: 0.3.3  
 **OpenClaw**: >= 2026.4.24  
 **License**: MIT  
 **架构**: 双 Skill（核心 🔒 + 进化 🔓）
@@ -32,7 +32,7 @@ npm postinstall 会自动完成 Agent 集成。安装后检查：
 
 ```bash
 openclaw config get agents.defaults.skills   # 应包含 "open-upsp"
-open-upsp --version                           # 应输出 v0.3.0
+open-upsp --version                           # 应输出 v0.3.3
 ```
 
 ### 手动安装（自动集成失败时）
@@ -49,9 +49,6 @@ cp -r $(npm root -g)/open-upsp/skill ~/.openclaw/skills/open-upsp
 
 # 4. 在 openclaw.json 中激活 skill
 openclaw config set agents.defaults.skills '["open-upsp", "zettelkasten-brain"]'
-
-# 5. 确保 tools.alsoAllow 包含 open-upsp
-openclaw config set tools.alsoAllow '["zettelkasten", "open-upsp"]'
 ```
 
 ---
@@ -60,9 +57,11 @@ openclaw config set tools.alsoAllow '["zettelkasten", "open-upsp"]'
 
 安装后，Agent 会自动：
 
-1. **对话开始时** — 加载位格上下文并注入 system prompt
+1. **对话开始时** — 加载位格上下文并注入 system prompt（通过静态 skill 注入）
 2. **对话中** — 以位格定义的身份和风格回应
 3. **对话结束时** — 自动执行 `session-end` 流程
+
+> **注意**: open-upsp 使用**静态注入**方式。位格身份与行为规则已嵌入根目录 `SKILL.md` 的 `description` 字段中，由 OpenClaw 自动加载注入 system prompt。无需依赖 CLI 动态获取。
 
 ---
 
@@ -71,10 +70,11 @@ openclaw config set tools.alsoAllow '["zettelkasten", "open-upsp"]'
 ```
 skill/
 ├── manifest.json           # Skill 组合清单
+├── SKILL.md               # 入口文件（包含静态注入的位格指令）
 ├── core/                   # 🔒 核心 Skill（不可变）
-│   ├── SKILL.md           # 本文件（技能入口）
-│   ├── PROMPT.md          # 动态系统提示词
-│   └── RULES.md           # 7 条核心行为规则
+│   ├── SKILL.md           # 本文件（安装与使用说明）
+│   ├── PROMPT.md          # 动态系统提示词模板（参考用）
+│   └── RULES.md           # 8 条核心行为规则（参考用）
 └── evolvable/              # 🔓 进化 Skill（渐进解锁，用户可编辑）
     ├── EVOLUTION.md       # 进化规则声明
     ├── PARAMS.yaml        # 运行时参数（实际生效）
@@ -87,7 +87,7 @@ skill/
 
 ## 依赖
 
-- `open-upsp` CLI 工具（v0.3.0+）
+- `open-upsp` CLI 工具（v0.3.3+）— 用于位格管理、初始化、状态查看
 - `zettelkasten` 插件（v1.0.0-beta.7+，随 open-upsp 自动安装）
 
 ---
@@ -109,10 +109,7 @@ open-upsp status
 
 ### 上下文未注入
 
-确保 `open-upsp context` 命令能正常输出：
-```bash
-open-upsp context --query "测试"
-```
+确保根目录 `SKILL.md` 的 YAML frontmatter `description` 字段包含位格指令。OpenClaw 通过解析 frontmatter 注入 skill 内容。
 
 ---
 

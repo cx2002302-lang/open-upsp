@@ -239,6 +239,59 @@ function installZkPlugin() {
   }
 }
 
+function ensureCliInPath() {
+  // 找到全局 npm bin 目录，创建 CLI symlink
+  let globalBin;
+  try {
+    globalBin = execSync("npm bin -g", { encoding: "utf8" }).trim();
+  } catch {
+    log("warn", "无法获取 npm global bin 目录，跳过 CLI symlink");
+    return false;
+  }
+
+  const cliSource = path.join(__dirname, "..", "dist", "cli.js");
+  if (!fs.existsSync(cliSource)) {
+    log("warn", `CLI 源文件不存在: ${cliSource}，跳过 symlink`);
+    log("info", "  提示: 如需 CLI，请先运行 npm run build");
+    return false;
+  }
+
+  const symlinkOpenUpsp = path.join(globalBin, "open-upsp");
+  const symlinkUpsp = path.join(globalBin, "upsp");
+
+  try {
+    if (fs.existsSync(symlinkOpenUpsp)) fs.unlinkSync(symlinkOpenUpsp);
+    fs.symlinkSync(cliSource, symlinkOpenUpsp);
+    log("ok", `CLI symlink 已创建: ${symlinkOpenUpsp} → ${cliSource}`);
+  } catch (e) {
+    log("warn", `创建 open-upsp symlink 失败: ${e.message}`);
+  }
+
+  try {
+    if (fs.existsSync(symlinkUpsp)) fs.unlinkSync(symlinkUpsp);
+    fs.symlinkSync(cliSource, symlinkUpsp);
+    log("ok", `CLI symlink 已创建: ${symlinkUpsp} → ${cliSource}`);
+  } catch (e) {
+    log("warn", `创建 upsp symlink 失败: ${e.message}`);
+  }
+
+  // 同时尝试添加到 ~/.local/bin（备用 PATH）
+  const localBin = path.join(process.env.HOME || "", ".local", "bin");
+  if (fs.existsSync(path.dirname(localBin))) {
+    fs.mkdirSync(localBin, { recursive: true });
+    try {
+      const localSymlink = path.join(localBin, "open-upsp");
+      if (fs.existsSync(localSymlink)) fs.unlinkSync(localSymlink);
+      fs.symlinkSync(cliSource, localSymlink);
+      log("ok", `CLI symlink 已创建: ${localSymlink} → ${cliSource}`);
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  return true;
+}
+
 function main() {
   // 仅全局安装时执行
   if (!isGlobalInstall()) {
@@ -247,6 +300,9 @@ function main() {
   }
 
   log("info", "open-upsp postinstall — 正在配置 OpenClaw Agent 集成...");
+
+  // 确保 CLI 在 PATH 中
+  ensureCliInPath();
 
   // 检测 OpenClaw
   if (!fs.existsSync(OPENCLAW_CONFIG)) {
