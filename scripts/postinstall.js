@@ -245,8 +245,14 @@ function ensureCliInPath() {
   try {
     globalBin = execSync("npm bin -g", { encoding: "utf8" }).trim();
   } catch {
-    log("warn", "无法获取 npm global bin 目录，跳过 CLI symlink");
-    return false;
+    // Fallback: npm bin -g may not work on all npm versions
+    try {
+      const prefix = execSync("npm prefix -g", { encoding: "utf8" }).trim();
+      globalBin = path.join(prefix, "bin");
+    } catch {
+      log("warn", "无法获取 npm global bin 目录，跳过 CLI symlink");
+      return false;
+    }
   }
 
   const cliSource = path.join(__dirname, "..", "dist", "cli.js");
@@ -254,6 +260,14 @@ function ensureCliInPath() {
     log("warn", `CLI 源文件不存在: ${cliSource}，跳过 symlink`);
     log("info", "  提示: 如需 CLI，请先运行 npm run build");
     return false;
+  }
+
+  // Ensure CLI source is executable (dist/ is gitignored, build may not set +x)
+  try {
+    fs.chmodSync(cliSource, 0o755);
+    log("ok", `CLI 源文件已设为可执行: ${cliSource}`);
+  } catch (e) {
+    log("warn", `设置 CLI 执行权限失败: ${e.message}`);
   }
 
   const symlinkOpenUpsp = path.join(globalBin, "open-upsp");
