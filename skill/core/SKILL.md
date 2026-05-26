@@ -1,7 +1,7 @@
 # open-upsp Skill
 
 **ID**: `open-upsp`  
-**Version**: 0.3.3  
+**Version**: 0.3.4  
 **OpenClaw**: >= 2026.4.24  
 **License**: MIT  
 **架构**: 双 Skill（核心 🔒 + 进化 🔓）
@@ -32,7 +32,7 @@ npm postinstall 会自动完成 Agent 集成。安装后检查：
 
 ```bash
 openclaw config get agents.defaults.skills   # 应包含 "open-upsp"
-open-upsp --version                           # 应输出 v0.3.3
+open-upsp --version                           # 应输出 v0.3.4
 ```
 
 ### 手动安装（自动集成失败时）
@@ -99,7 +99,7 @@ skill/
 
 ## 依赖
 
-- `open-upsp` CLI 工具（v0.3.3+）— 用于位格管理、动态上下文生成
+- `open-upsp` CLI 工具（v0.3.4+）— 用于位格管理、动态上下文生成
 - `zettelkasten` 插件（v1.0.0-beta.7+，随 open-upsp 自动安装）
 
 ---
@@ -134,4 +134,4 @@ export PATH="$HOME/.npm-global/bin:$HOME/.local/bin:$PATH"
 
 ---
 
-*版本: 0.3.3 | 双 Skill 架构 | 核心不可变 + 进化可编辑*
+*版本: 0.3.4 | 双 Skill 架构 | 核心不可变 + 进化可编辑*
