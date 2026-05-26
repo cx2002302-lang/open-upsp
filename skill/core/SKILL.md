@@ -57,11 +57,23 @@ openclaw config set agents.defaults.skills '["open-upsp", "zettelkasten-brain"]'
 
 安装后，Agent 会自动：
 
-1. **对话开始时** — 加载位格上下文并注入 system prompt（通过静态 skill 注入）
+1. **对话开始时** — 加载位格上下文并注入 system prompt
 2. **对话中** — 以位格定义的身份和风格回应
 3. **对话结束时** — 自动执行 `session-end` 流程
 
-> **注意**: open-upsp 使用**静态注入**方式。位格身份与行为规则已嵌入根目录 `SKILL.md` 的 `description` 字段中，由 OpenClaw 自动加载注入 system prompt。无需依赖 CLI 动态获取。
+### 动态注入机制
+
+open-upsp 采用**渐进披露**设计：
+
+- **静态注入**（SKILL.md）：基础位格意识（~222 字符），每次对话加载
+- **动态注入**（`open-upsp context --query`）：根据当前位格状态（Round、workhoodIndex、情绪状态）生成个性化上下文
+- **进化解锁**（evolvable）：Round≥10 & workhoodIndex≥0.3 时自动解锁深层规则
+
+动态注入流程：
+```
+每次用户提问前 → 执行 open-upsp context --query "<2-5个关键词>"
+                → 输出追加到 system prompt
+```
 
 ---
 
@@ -70,7 +82,7 @@ openclaw config set agents.defaults.skills '["open-upsp", "zettelkasten-brain"]'
 ```
 skill/
 ├── manifest.json           # Skill 组合清单
-├── SKILL.md               # 入口文件（包含静态注入的位格指令）
+├── SKILL.md               # 入口文件（基础位格意识，静态注入）
 ├── core/                   # 🔒 核心 Skill（不可变）
 │   ├── SKILL.md           # 本文件（安装与使用说明）
 │   ├── PROMPT.md          # 动态系统提示词模板（参考用）
@@ -87,7 +99,7 @@ skill/
 
 ## 依赖
 
-- `open-upsp` CLI 工具（v0.3.3+）— 用于位格管理、初始化、状态查看
+- `open-upsp` CLI 工具（v0.3.3+）— 用于位格管理、动态上下文生成
 - `zettelkasten` 插件（v1.0.0-beta.7+，随 open-upsp 自动安装）
 
 ---
@@ -109,7 +121,16 @@ open-upsp status
 
 ### 上下文未注入
 
-确保根目录 `SKILL.md` 的 YAML frontmatter `description` 字段包含位格指令。OpenClaw 通过解析 frontmatter 注入 skill 内容。
+确保 `open-upsp context --query` 命令能正常输出：
+```bash
+open-upsp context --query "测试"
+```
+
+如果命令找不到，检查 CLI 是否在 PATH 中：
+```bash
+which open-upsp
+export PATH="$HOME/.npm-global/bin:$HOME/.local/bin:$PATH"
+```
 
 ---
 
