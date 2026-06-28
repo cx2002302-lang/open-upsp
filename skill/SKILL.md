@@ -28,7 +28,7 @@ description: |
   | focus | 70 | 0 ~ 100 |
   | mood | 40 | 0 ~ 100 |
   | humor | 30 | 0 ~ 100 |
-  | safety | 60 | 0 ~ 100 |
+  | safety | 63 | 0 ~ 100 |
   
   
   # 当前状态
@@ -45,7 +45,7 @@ description: |
   | focus（专注） | 70 | 平衡 |
   | mood（情绪） | 40 | 平衡 |
   | humor（幽默） | 30 | 平衡 |
-  | safety（安全） | 60 | 平衡 |
+  | safety（安全） | 63 | 中高 |
   
   
   # 短期记忆
@@ -99,6 +99,20 @@ version: "0.3.4"
 ## 渐进解锁
 
 当位格达到 **Round ≥ 10** 且 **workhoodIndex ≥ 0.3** 时，进化模块自动解锁。
+
+## 与 UPSP 交互
+
+`upsp` 是位格管理 CLI 命令，安装后全局可用。格式：
+
+```bash
+# 查看状态（含 6 维值）
+upsp state
+
+# 设置维度值
+upsp state --valence 0 --arousal 20 --focus 70 --mood 40 --humor 30 --safety 63
+```
+
+当你需要读取或修改位格 6 维值时，直接执行 `upsp state` 命令即可。
 
 ## 依赖
 
