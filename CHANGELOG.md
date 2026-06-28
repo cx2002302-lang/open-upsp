@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v0.3.5] — 2026-06-28
+
+### 🔧 Changed
+- Default safety axis value: 60 → 63
+- SKILL.md updated with `upsp state` CLI usage instructions for AI Agent
+
 ## [v0.3.0] — 2026-05-13 — Production Beta
 
 ### ✨ Added
