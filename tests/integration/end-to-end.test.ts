@@ -2,14 +2,8 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  ContextBuilder,
-  getConfig,
-  PersonaLoader,
-  PersonaSaver,
-  resolvePath,
-  SQLiteBridge,
-} from "../../src/index.js";
+import { ContextBuilder, PersonaLoader, PersonaSaver, SQLiteBridge } from "../../src/index.js";
+import { createZkFixture } from "../helpers/zk-fixture.js";
 
 describe("End-to-end: Persona → Context", () => {
   let tempDir: string;
@@ -61,28 +55,30 @@ describe("End-to-end: Persona → Context", () => {
     saver.save(persona);
     const loaded = loader.load("e2e");
 
-    // 连接 ZK
-    const config = getConfig();
-    const dbPath = resolvePath(config.zettelkasten.databasePath);
+    // 连接 ZK（临时 fixture 库，schema 2.1.0，不触碰真实生产库）
+    const fixture = createZkFixture({ schemaVersion: "2.1.0" });
     const bridge = new SQLiteBridge({
-      dbPath,
+      dbPath: fixture.dbPath,
       compatibleSchemaVersions: ["2.0.0"],
     });
 
-    // 构建上下文
-    const builder = new ContextBuilder(bridge);
-    const context = builder.build(loaded, { query: "test" });
+    try {
+      // 构建上下文
+      const builder = new ContextBuilder(bridge);
+      const context = builder.build(loaded, { query: "test" });
 
-    // 验证上下文包含位格信息
-    expect(context).toContain("E2E Test");
-    expect(context).toContain("**轮数**: 5");
-    expect(context).toContain("E2E test memory");
-    expect(context).toContain("user");
-    expect(context).toContain("0.80");
+      // 验证上下文包含位格信息
+      expect(context).toContain("E2E Test");
+      expect(context).toContain("**轮数**: 5");
+      expect(context).toContain("E2E test memory");
+      expect(context).toContain("user");
+      expect(context).toContain("0.80");
 
-    // 验证上下文包含知识检索部分（即使为空也要有标题）
-    expect(context).toContain("知识库检索");
-
-    bridge.close();
+      // 验证上下文包含知识检索部分（即使为空也要有标题）
+      expect(context).toContain("知识库检索");
+    } finally {
+      bridge.close();
+      fixture.cleanup();
+    }
   });
 });

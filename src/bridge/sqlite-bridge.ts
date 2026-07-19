@@ -31,6 +31,13 @@ export class ZettelkastenConnectionError extends Error {
   }
 }
 
+/**
+ * 内置兼容的 Zettelkasten schema 版本。
+ * 2.1.0 相对 2.0.0 在读路径上向后兼容，因此即使调用方（旧配置）
+ * 只声明了 2.0.0，也一并接受，避免生产库升级后被误拒。
+ */
+const BUILTIN_COMPATIBLE_SCHEMA_VERSIONS = ["2.0.0", "2.1.0"];
+
 export interface SQLiteBridgeOptions {
   dbPath: string;
   compatibleSchemaVersions: string[];
@@ -107,23 +114,26 @@ export class SQLiteBridge implements KnowledgeBridge {
   }
 
   private checkSchemaVersion(db: Database.Database): void {
+    const acceptedVersions = [
+      ...new Set([...this.options.compatibleSchemaVersions, ...BUILTIN_COMPATIBLE_SCHEMA_VERSIONS]),
+    ];
     try {
       const row = db.prepare("SELECT value FROM zettel_meta WHERE key = 'schema_version'").get() as
         | { value: string }
         | undefined;
 
       if (!row) {
-        throw new ZettelkastenVersionError("unknown", this.options.compatibleSchemaVersions);
+        throw new ZettelkastenVersionError("unknown", acceptedVersions);
       }
 
       const version = row.value;
-      if (!this.options.compatibleSchemaVersions.includes(version)) {
-        throw new ZettelkastenVersionError(version, this.options.compatibleSchemaVersions);
+      if (!acceptedVersions.includes(version)) {
+        throw new ZettelkastenVersionError(version, acceptedVersions);
       }
     } catch (err) {
       if (err instanceof ZettelkastenVersionError) throw err;
       // 如果 zettel_meta 表不存在，说明是极旧版本
-      throw new ZettelkastenVersionError("unknown", this.options.compatibleSchemaVersions);
+      throw new ZettelkastenVersionError("unknown", acceptedVersions);
     }
   }
 
@@ -157,13 +167,18 @@ export class SQLiteBridge implements KnowledgeBridge {
   }
 
   private searchWithFts(db: Database.Database, query: string, limit: number): SearchResult[] {
+    // schema 2.1.0 部分部署的 zettel_fts 没有 id 列，此时降级为 rowid 关联
+    const joinCondition = this.getFtsColumns(db).includes("id")
+      ? "n.id = fts.id"
+      : "fts.rowid = n.rowid";
+
     const stmt = db.prepare(`
       SELECT n.id, n.title, n.content, n.summary, n.type, n.status, n.folder,
              n.confidence, n.source, n.reviewed, n.session_key, n.file_path,
              n.created_at, n.updated_at,
              rank AS score
       FROM zettel_notes n
-      JOIN zettel_fts fts ON n.id = fts.id
+      JOIN zettel_fts fts ON ${joinCondition}
       WHERE zettel_fts MATCH ?
         AND n.folder != 'archive'
       ORDER BY rank
@@ -172,6 +187,15 @@ export class SQLiteBridge implements KnowledgeBridge {
 
     const rows = stmt.all(query, limit) as Array<Record<string, unknown>>;
     return rows.map((row) => this.toSearchResult(db, row));
+  }
+
+  /**
+   * 探测 zettel_fts 的实际列结构，用于决定 FTS 关联方式：
+   * 有 id 列时按 id 关联，否则按 rowid 关联。
+   */
+  private getFtsColumns(db: Database.Database): string[] {
+    const rows = db.prepare("PRAGMA table_info(zettel_fts)").all() as Array<{ name: string }>;
+    return rows.map((row) => row.name);
   }
 
   private searchWithLike(db: Database.Database, query: string, limit: number): SearchResult[] {

@@ -1,16 +1,22 @@
-import { beforeAll, describe, expect, it } from "vitest";
-import { getConfig, resolvePath, SQLiteBridge } from "../../src/index.js";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { SQLiteBridge } from "../../src/index.js";
+import { createZkFixture, type ZkFixture } from "../helpers/zk-fixture.js";
 
 describe("SQLiteBridge extended", () => {
-  const config = getConfig();
-  const dbPath = resolvePath(config.zettelkasten.databasePath);
+  let fixture: ZkFixture;
   let bridge: SQLiteBridge;
 
   beforeAll(() => {
+    fixture = createZkFixture({ schemaVersion: "2.1.0" });
     bridge = new SQLiteBridge({
-      dbPath,
+      dbPath: fixture.dbPath,
       compatibleSchemaVersions: ["2.0.0"],
     });
+  });
+
+  afterAll(() => {
+    bridge.close();
+    fixture.cleanup();
   });
 
   it("should get backlinks for a note", () => {
