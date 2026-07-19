@@ -82,6 +82,10 @@ cd open-upsp
 # Install dependencies
 npm install
 
+# If you see better-sqlite3 NODE_MODULE_VERSION errors (e.g. on Node.js 24+),
+# rebuild the native module:
+npm rebuild better-sqlite3
+
 # Run tests
 npm test
 
