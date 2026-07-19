@@ -21,7 +21,7 @@
   </a>
   <img src="https://img.shields.io/badge/许可证-MIT-blue?style=flat-square" alt="License">
   <img src="https://img.shields.io/badge/Node.js-%3E%3D22.0.0-brightgreen?style=flat-square" alt="Node.js">
-  <img src="https://img.shields.io/badge/OpenClaw-%3E%3D2026.4.24-lightgrey?style=flat-square" alt="OpenClaw">
+  <img src="https://img.shields.io/badge/OpenClaw-%3E%3D2026.7.1-lightgrey?style=flat-square" alt="OpenClaw">
 </p>
 
 <p align="center">
@@ -62,11 +62,11 @@
 | 组件 | 版本 | 用途 |
 |------|------|------|
 | Node.js | >= 22 | 核心 CLI（必需） |
-| OpenClaw | **>= 2026.4.24** | Agent Skill + ZK 深度记忆（可选） |
+| OpenClaw | **>= 2026.7.1** | Agent Skill + ZK 深度记忆（可选） |
 
-> ⚠️ **基于 OpenClaw v2026.4.24 开发并测试**
+> ⚠️ **基于 OpenClaw v2026.7.1 开发并测试**
 >
-> Zettelkasten 深度记忆插件和 Agent Skill 集成依赖 OpenClaw v2026.4.24 引入的插件 SDK API。低版本将在安装时被拒绝。
+> Zettelkasten 深度记忆插件和 Agent Skill 集成依赖 OpenClaw v2026.7.1 引入的插件 SDK API。低版本将在安装时被拒绝。
 >
 > **OpenClaw 是可选依赖**——如果只需要 CLI 和文件位格管理功能，无需安装 OpenClaw。
 
@@ -162,7 +162,7 @@ open-upsp 采用独特的**双技能**设计：
 
 ## 🧪 测试
 
-### 测试结果（v0.3.0 Beta）
+### 测试结果（v0.3.6 Beta）
 
 | 指标 | 数值 | 状态 |
 |------|------|------|
@@ -270,6 +270,6 @@ open-upsp-release/
 ---
 
 <p align="center">
-  <sub>为 AI 原生应用精心打造 ❤️ · v0.3.0 Beta</sub><br>
+  <sub>为 AI 原生应用精心打造 ❤️ · v0.3.6 Beta</sub><br>
   <sub>让你的 AI 拥有一个持久存在的自我。</sub>
 </p>

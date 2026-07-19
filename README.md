@@ -21,7 +21,7 @@
   </a>
   <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License">
   <img src="https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen?style=flat-square" alt="Node.js">
-  <img src="https://img.shields.io/badge/OpenClaw-%3E%3D2026.4.24-lightgrey?style=flat-square" alt="OpenClaw">
+  <img src="https://img.shields.io/badge/OpenClaw-%3E%3D2026.7.1-lightgrey?style=flat-square" alt="OpenClaw">
 </p>
 
 <p align="center">
@@ -62,11 +62,11 @@ Instead of losing context every time a conversation ends, open-upsp maintains a 
 | Component | Version | Required For |
 |-----------|---------|-------------|
 | Node.js | >= 22 | Core CLI (required) |
-| OpenClaw | **>= 2026.4.24** | Agent Skill + ZK deep memory (optional) |
+| OpenClaw | **>= 2026.7.1** | Agent Skill + ZK deep memory (optional) |
 
-> ⚠️ **Developed & tested on OpenClaw v2026.4.24**
+> ⚠️ **Developed & tested on OpenClaw v2026.7.1**
 >
-> The Zettelkasten deep-memory plugin and Agent Skill integration rely on APIs introduced in OpenClaw v2026.4.24. Earlier versions will be rejected at install time.
+> The Zettelkasten deep-memory plugin and Agent Skill integration rely on APIs introduced in OpenClaw v2026.7.1. Earlier versions will be rejected at install time.
 >
 > **OpenClaw is optional** — open-upsp CLI works standalone without it. If you only need the CLI and file-based persona management, no OpenClaw installation is required.
 
@@ -170,7 +170,7 @@ The evolvable skill activates after **10 interaction rounds** and a **0.3 workho
   <img src="docs/assets/open-upsp-metrics-infographic.jpg" alt="Test Metrics" width="100%">
 </p>
 
-### Test Results (v0.3.0 Beta)
+### Test Results (v0.3.6 Beta)
 
 | Metric | Value | Status |
 |--------|-------|--------|
@@ -278,6 +278,6 @@ The bundled Zettelkasten plugin is also MIT licensed and maintained separately a
 ---
 
 <p align="center">
-  <sub>Built with ❤️ for AI-native applications · v0.3.0 Beta</sub><br>
+  <sub>Built with ❤️ for AI-native applications · v0.3.6 Beta</sub><br>
   <sub>Give your AI a self that persists.</sub>
 </p>
